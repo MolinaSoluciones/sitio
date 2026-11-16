@@ -125,3 +125,10 @@ h1,h2,h3{margin:0}
 .menu a:hover{color:#fff;background:rgba(255,255,255,.1)}
 .menu a.on{background:var(--oro);color:var(--tinta)}
 @media (max-width:520px){.top{padding:12px 14px}.menu{width:100%}.menu a{flex:1;justify-content:center;background:rgba(255,255,255,.08)}.menu a.on{background:var(--oro)}}
+.pantallas{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
+.pantallas figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.marco{border:1px solid var(--linea);border-radius:22px;overflow:hidden;background:#fff;aspect-ratio:39/76;box-shadow:0 6px 18px rgba(107,20,55,.08)}
+.marco img{width:100%;height:100%;object-fit:cover;object-position:top}
+.marco.corta{background:#fdf6f9}.marco.corta img{height:auto;object-fit:contain}
+.pantallas figcaption{font-size:14px;font-weight:600;text-align:center}
+@media (max-width:860px){.pantallas{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:62%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-right:-20px;padding-right:20px}.pantallas figure{scroll-snap-align:start}}
