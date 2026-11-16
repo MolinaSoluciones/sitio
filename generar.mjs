@@ -128,7 +128,7 @@ function preparar(crudas) {
 /* ---------- piezas de página ---------- */
 const CSS = readFileSync(new URL('./estilo.css', import.meta.url), 'utf8');
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
-function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo }) {
+function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina }) {
   const url = SITIO + ruta;
   return `<!doctype html>
 <html lang="es">
@@ -156,6 +156,7 @@ ${ld ? jsonld(ld) : ''}
 ${cuerpo}
 </main>
 <footer class="pie">${marca ? `<p>Molina Soluciones Digitales · San Pedro Sula, Honduras</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="${WA}" rel="noopener">WhatsApp</a></p>` : `<p>Cada tienda es responsable de sus productos, precios y entregas.</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="/">Molina Soluciones Digitales</a></p>`}</footer>
+${modulo || sinEsquina ? '' : '<a class="esquina" href="/aparecer/">¿Ya tienes tienda? Aparece aquí</a>'}
 <script>(window.mvq = window.mvq || []).push('catrachas')</script>
 <script src="${esc(TIENDA_URL)}visitas.js?v=1" defer></script>
 </body>
@@ -207,7 +208,7 @@ function generar(T) {
     ['¿Cómo se paga?', 'Cada negocio define sus formas de pago, por ejemplo efectivo o transferencia. Las ves en su página antes de pedir.'],
     ['¿Quién entrega mi pedido?', 'El negocio al que le compras. Cada uno indica si entrega a domicilio, si es para recoger o las dos.'],
     ['¿Tiendas Catrachas vende los productos?', 'No. Es un directorio: cada tienda es de su dueño, que es quien responde por sus productos, precios y entregas.'],
-    ['¿Cómo hago para que mi negocio aparezca aquí?', 'Creando tu tienda en línea con Gestión de Negocio VM y encendiendo «Aparecer en Tiendas Catrachas» dentro del programa.']];
+    ['¿Cómo hago para que mi negocio aparezca aquí?', 'Si usas Gestión de Negocio VM, enciende «Aparecer en Tiendas Catrachas» dentro del programa. Si ya tienes tu tienda en otro lado, puedes aparecer por L 150 al mes: toca «Aparece aquí» y déjanos tus datos.']];
 
   // Portada del directorio
   poner('/tiendas/', pagina({ ruta: '/tiendas/', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
@@ -360,6 +361,41 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
 <h2 class="tit">Guías</h2><div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div>
 ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el programa 7 días.')}</section>` }));
   urls.push('/para-tu-negocio/');
+
+  // Tiendas que no usan el programa: por ahora solo dejan sus datos y Vic las contacta (L 150 al mes)
+  poner('/aparecer/', pagina({ ruta: '/aparecer/', sinEsquina: true, title: 'Aparece en Tiendas Catrachas con tu tienda · L 150 al mes', desc: '¿Ya tienes tu tienda en línea, tu página o tu catálogo? Aparece en Tiendas Catrachas por L 150 al mes. Déjanos tus datos y te contactamos.',
+    cuerpo: `<section class="hero"><h1>Aparece en Tiendas Catrachas</h1><p>¿Ya tienes tu tienda en línea, tu página o tu catálogo en otro lado? También puedes aparecer aquí.</p></section>
+<section class="cont guia">${migas([['Tiendas', '/tiendas/'], ['Aparecer aquí']])}
+<div class="precio"><b>L 150 al mes</b><span>Tu negocio en el directorio, con su nombre, tipo de negocio, ciudad, foto y un botón que lleva a tu tienda.</span></div>
+<h2 class="tit">Déjanos tus datos y te contactamos</h2>
+<form id="f-ap" class="formu" novalidate>
+<label>Nombre del negocio<input name="negocio" required maxlength="80" autocomplete="organization"></label>
+<label>Tu nombre<input name="nombre" required maxlength="60" autocomplete="name"></label>
+<label>Tu WhatsApp<input name="whatsapp" required inputmode="tel" maxlength="20" autocomplete="tel" placeholder="9999-9999"></label>
+<label>Tipo de negocio<select name="tipo"><option value="">Elige uno</option>${Object.values(GIROS).map(g => `<option>${esc(g)}</option>`).join('')}</select></label>
+<label>Ciudad<input name="ciudad" required maxlength="40" placeholder="San Pedro Sula"></label>
+<label>Enlace de tu tienda, página o Instagram<input name="enlace" required maxlength="200" placeholder="https://… o @tunegocio"></label>
+<label>Algo más que quieras contarnos (opcional)<textarea name="nota" rows="3" maxlength="300"></textarea></label>
+<p class="aviso-f" id="f-err" role="alert" hidden>Llena los campos marcados para poder enviarlo.</p>
+<button class="btn grande" type="submit">Enviar por WhatsApp</button>
+<p class="nota-f">Al tocar el botón se abre WhatsApp con tus datos ya escritos; solo envías el mensaje. Te respondemos para coordinar el pago y publicar tu negocio.</p>
+</form>
+<div class="pto"><h3>¿Aún no tienes tienda en línea?</h3><p>Con Gestión de Negocio VM tienes tu tienda, tus productos aparecen aquí solos y además llevas ventas, inventario y caja. <a href="/para-tu-negocio/">Ver «Para tu negocio»</a></p></div>
+</section>
+<script>
+(function () {
+  var f = document.getElementById('f-ap'), e = document.getElementById('f-err'); if (!f) return;
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var d = {}, falta = false;
+    [].forEach.call(f.elements, function (c) { if (!c.name) return; d[c.name] = String(c.value || '').trim(); var mal = c.required && !d[c.name]; c.setAttribute('aria-invalid', mal ? 'true' : 'false'); if (mal) falta = true; });
+    e.hidden = !falta; if (falta) { var p = f.querySelector('[aria-invalid="true"]'); if (p) p.focus(); return; }
+    var t = 'Hola, quiero aparecer en Tiendas Catrachas (L 150 al mes).\\n\\n' + 'Negocio: ' + d.negocio + '\\nNombre: ' + d.nombre + '\\nWhatsApp: ' + d.whatsapp + (d.tipo ? '\\nTipo de negocio: ' + d.tipo : '') + '\\nCiudad: ' + d.ciudad + '\\nMi tienda: ' + d.enlace + (d.nota ? '\\nNota: ' + d.nota : '');
+    location.href = '${WA}?text=' + encodeURIComponent(t);
+  });
+})();
+</script>` }));
+  urls.push('/aparecer/');
 
   // Página de inicio del dominio: primero los negocios; los tipos de negocio, en un párrafo
   const probar = esc(TIENDA_URL) + '?src=sitio', top = T.slice(0, 12);

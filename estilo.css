@@ -132,3 +132,15 @@ h1,h2,h3{margin:0}
 .marco.corta{background:#fdf6f9}.marco.corta img{height:auto;object-fit:contain}
 .pantallas figcaption{font-size:14px;font-weight:600;text-align:center}
 @media (max-width:860px){.pantallas{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:62%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-right:-20px;padding-right:20px}.pantallas figure{scroll-snap-align:start}}
+.esquina{position:fixed;right:12px;bottom:12px;z-index:5;min-height:44px;padding:0 16px;border-radius:22px;background:var(--tinta);color:#fff;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;box-shadow:0 6px 18px rgba(42,26,32,.28)}
+.esquina:hover{background:var(--vino);color:#fff}
+.pie{padding-bottom:76px}
+.precio{margin-top:16px;background:var(--vino);color:#F3E6DC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:6px}
+.precio b{font-family:'Playfair Display',serif;font-size:30px;color:var(--crema)}
+.formu{margin:16px 0 26px;display:flex;flex-direction:column;gap:14px}
+.formu label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.formu input,.formu select,.formu textarea{min-height:48px;border:1px solid var(--linea);border-radius:12px;padding:10px 14px;font:inherit;font-weight:400;color:var(--tinta);background:#fff}
+.formu [aria-invalid="true"]{border-color:#B00020;background:#FFF5F6}
+.aviso-f{margin:0;color:#B00020;font-weight:600}
+.aviso-f[hidden]{display:none}
+.nota-f{margin:0;font-size:13px;color:var(--gris)}
