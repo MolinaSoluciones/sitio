@@ -199,3 +199,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:url(/fondo.
 .pt-busca input{font-weight:400}.pt-chips a{font-weight:500}
 @media (max-width:640px){.pt-dato{top:calc(100cqw * 9 / 16 * .47 + 12cqw)}}
 .pt-busca{box-sizing:border-box}.pt-busca label{min-width:0}.pt-busca input{width:100%}.pt-busca button{flex-shrink:0}
+/* buscador del directorio dentro de la portada */
+.hero.portada .buscar{margin:1.4cqw auto 0;width:100%;max-width:560px;gap:8px;flex-wrap:nowrap}
+.hero.portada .buscar .caja{flex:1 1 auto}
+.hero.portada .buscar .sel{flex:0 0 190px}
+.hero.portada .buscar input,.hero.portada .buscar select{border:1.5px solid rgba(107,20,55,.28);border-radius:999px;box-shadow:0 4px 14px rgba(60,10,30,.10);font-family:Inter,system-ui,sans-serif;height:46px;box-sizing:border-box}
+@media (max-width:640px){.hero.portada .buscar{flex-wrap:wrap;margin-top:14px}.hero.portada .buscar .sel{flex:1 1 100%}}
+.hero.portada .buscar input,.hero.portada .buscar select{font-size:15px;padding:0 16px}@media (max-width:640px){.hero.portada .buscar input,.hero.portada .buscar select{font-size:16px}}

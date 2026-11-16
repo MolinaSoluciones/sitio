@@ -207,6 +207,13 @@ function generar(T) {
   const girosCon = Object.keys(GIROS).filter(g => T.some(t => t.giros.includes(g)));
   const selCiudad = ciudades.length > 1 ? `<label class="sel"><span class="oculto">Ciudad</span><select id="ciudad"><option value="">Todas las ciudades</option>${ciudades.map(([s, n]) => `<option value="${esc(s)}">${esc(n)}</option>`).join('')}</select></label>` : '';
   const buscador = `<div class="buscar"><label class="caja"><span class="oculto">Buscar tienda</span><input id="buscar" type="search" placeholder="Busca una tienda o un tipo de negocio" autocomplete="off"></label>${selCiudad}</div>`;
+  const nCiud = new Set(T.map(t => t.ciudadSlug)).size;
+  // Portada ilustrada (marco con centro blanco): título y buscador dentro; en celular solo el nombre dentro del marco
+  const portada = (h1, p, extra) => `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}" style="background-image:url(/portadas/${n}.jpg)"></div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>${h1}</h1><p>${p}</p>${extra}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
+<script>(function () { var s = [].slice.call(document.querySelectorAll('#portadas .pt')), d = [].slice.call(document.querySelectorAll('#pt-dots button')), i = 0, t = 0; if (s.length < 2) return;
+  function ir(n) { i = (n + s.length) % s.length; s.forEach(function (e, k) { e.classList.toggle('on', k === i); }); d.forEach(function (e, k) { e.classList.toggle('on', k === i); }); }
+  function auto() { clearInterval(t); if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) t = setInterval(function () { ir(i + 1); }, 5000); }
+  d.forEach(function (e, k) { e.addEventListener('click', function () { ir(k); auto(); }); }); auto(); })();</script>`;
   const urls = ['/'];
   const FAQ_DIR = [['¿Cómo hago un pedido?', 'Entra a la tienda que te interesa, elige tus productos y envía el pedido. El negocio lo recibe en su programa y te atiende directamente.'],
     ['¿Cómo se paga?', 'Cada negocio define sus formas de pago, por ejemplo efectivo o transferencia. Las ves en su página antes de pedir.'],
@@ -217,7 +224,7 @@ function generar(T) {
   // Portada del directorio
   poner('/tiendas/', pagina({ ruta: '/tiendas/', medir: 'tc-dir', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
     ld: listaLd('Tiendas Catrachas', T),
-    cuerpo: `<section class="hero"><h1>Tiendas en línea de Honduras</h1><p>Negocios catrachos con su tienda online. Entra, mira el catálogo y haz tu pedido por internet directo con el negocio, a domicilio o para recoger.</p>${buscador}</section>
+    cuerpo: `${portada('Tiendas en línea de Honduras', 'Negocios catrachos con su tienda online. Mira el catálogo y haz tu pedido directo con el negocio, a domicilio o para recoger.', buscador)}
 <section class="cont">${chips([['Todos', '/tiendas/', true], ...girosCon.map(g => [GIROS[g], '/tiendas/' + slug(GIROS[g]) + '/'])])}
 <p class="cuenta">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · primero las más visitadas</p>
 ${rejilla(T)}
@@ -411,15 +418,10 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
 
   // Página de inicio del dominio: primero los negocios; los tipos de negocio, en un párrafo
   const probar = esc(TIENDA_URL) + '?src=sitio', top = T.slice(0, 12);
-  const nCiud = new Set(T.map(t => t.ciudadSlug)).size;
   const girosTop = Object.keys(GIROS).map(g => [g, T.filter(t => t.giros.includes(g)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 4);
   const buscaPortada = `<form class="pt-busca" action="/tiendas/" method="get" role="search"><label><span class="oculto">Buscar tienda</span><input name="q" type="search" placeholder="¿Qué buscas? Flores, comida, mascotas…" autocomplete="off"></label><button type="submit">Buscar</button></form><script>if (innerWidth < 641) document.querySelector('.pt-busca input').placeholder = '¿Qué buscas?';</script>${girosTop.length ? `<div class="pt-chips">${girosTop.map(([g]) => `<a href="/tiendas/${slug(GIROS[g])}/">${esc(GIROS[g])}</a>`).join('')}</div>` : ''}`;
   archivos['/index.html'] = pagina({ ruta: '/', marca: true, medir: 'tc-inicio', title: 'Molina Soluciones Digitales · Negocios de Honduras con tienda en línea', desc: 'Conoce los negocios de Honduras que venden en línea con Gestión de Negocio VM y crea la tienda de tu negocio.', ld: listaLd('Negocios con tienda en línea', top),
-    cuerpo: `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}" style="background-image:url(/portadas/${n}.jpg)"></div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>Negocios de Honduras con tienda en línea</h1><p>Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.</p>${buscaPortada}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
-<script>(function () { var s = [].slice.call(document.querySelectorAll('#portadas .pt')), d = [].slice.call(document.querySelectorAll('#pt-dots button')), i = 0, t = 0; if (s.length < 2) return;
-  function ir(n) { i = (n + s.length) % s.length; s.forEach(function (e, k) { e.classList.toggle('on', k === i); }); d.forEach(function (e, k) { e.classList.toggle('on', k === i); }); }
-  function auto() { clearInterval(t); if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) t = setInterval(function () { ir(i + 1); }, 5000); }
-  d.forEach(function (e, k) { e.addEventListener('click', function () { ir(k); auto(); }); }); auto(); })();</script>
+    cuerpo: `${portada('Negocios de Honduras con tienda en línea', 'Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.', buscaPortada)}
 <section class="cont"><p class="cuenta">${T.length > top.length ? 'Los ' + top.length + ' más visitados' : T.length + (T.length === 1 ? ' negocio' : ' negocios') + ' · primero los más visitados'}</p>
 ${rejilla(top)}
 ${T.length > top.length ? `<p class="mas"><a class="btn linea" href="/tiendas/">Ver los ${T.length} negocios</a></p>` : `<p class="mas"><a class="btn linea" href="/tiendas/">Buscar por ciudad o tipo de negocio</a></p>`}
