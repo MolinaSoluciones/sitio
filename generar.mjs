@@ -208,7 +208,7 @@ function generar(T) {
     ['¿Cómo se paga?', 'Cada negocio define sus formas de pago, por ejemplo efectivo o transferencia. Las ves en su página antes de pedir.'],
     ['¿Quién entrega mi pedido?', 'El negocio al que le compras. Cada uno indica si entrega a domicilio, si es para recoger o las dos.'],
     ['¿Tiendas Catrachas vende los productos?', 'No. Es un directorio: cada tienda es de su dueño, que es quien responde por sus productos, precios y entregas.'],
-    ['¿Cómo hago para que mi negocio aparezca aquí?', 'Si usas Gestión de Negocio VM, enciende «Aparecer en Tiendas Catrachas» dentro del programa. Si ya tienes tu tienda en otro lado, puedes aparecer por L 150 al mes: toca «Aparece aquí» y déjanos tus datos.']];
+    ['¿Cómo hago para que mi negocio aparezca aquí?', 'Si usas Gestión de Negocio VM, enciende «Aparecer en Tiendas Catrachas» dentro del programa. Si ya tienes tu tienda en otro lado, puedes aparecer por L 150 al mes: toca «Aparece aquí», llena el formulario y te contactamos en 48 horas.']];
 
   // Portada del directorio
   poner('/tiendas/', pagina({ ruta: '/tiendas/', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
@@ -363,7 +363,7 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
   urls.push('/para-tu-negocio/');
 
   // Tiendas que no usan el programa: por ahora solo dejan sus datos y Vic las contacta (L 150 al mes)
-  poner('/aparecer/', pagina({ ruta: '/aparecer/', sinEsquina: true, title: 'Aparece en Tiendas Catrachas con tu tienda · L 150 al mes', desc: '¿Ya tienes tu tienda en línea, tu página o tu catálogo? Aparece en Tiendas Catrachas por L 150 al mes. Déjanos tus datos y te contactamos.',
+  poner('/aparecer/', pagina({ ruta: '/aparecer/', sinEsquina: true, title: 'Aparece en Tiendas Catrachas con tu tienda · L 150 al mes', desc: '¿Ya tienes tu tienda en línea, tu página o tu catálogo? Aparece en Tiendas Catrachas por L 150 al mes. Déjanos tus datos y te contactamos en 48 horas.',
     cuerpo: `<section class="hero"><h1>Aparece en Tiendas Catrachas</h1><p>¿Ya tienes tu tienda en línea, tu página o tu catálogo en otro lado? También puedes aparecer aquí.</p></section>
 <section class="cont guia">${migas([['Tiendas', '/tiendas/'], ['Aparecer aquí']])}
 <div class="precio"><b>L 150 al mes</b><span>Tu negocio en el directorio, con su nombre, tipo de negocio, ciudad, foto y un botón que lleva a tu tienda.</span></div>
@@ -377,9 +377,10 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
 <label>Enlace de tu tienda, página o Instagram<input name="enlace" required maxlength="200" placeholder="https://… o @tunegocio"></label>
 <label>Algo más que quieras contarnos (opcional)<textarea name="nota" rows="3" maxlength="300"></textarea></label>
 <p class="aviso-f" id="f-err" role="alert" hidden>Llena los campos marcados para poder enviarlo.</p>
-<button class="btn grande" type="submit">Enviar por WhatsApp</button>
-<p class="nota-f">Al tocar el botón se abre WhatsApp con tus datos ya escritos; solo envías el mensaje. Te respondemos para coordinar el pago y publicar tu negocio.</p>
+<button class="btn grande" type="submit">Enviar solicitud</button>
+<p class="nota-f">Evaluamos cada solicitud y te contactamos por WhatsApp en un máximo de 48 horas.</p>
 </form>
+<div class="listo" id="f-ok" role="status" tabindex="-1" hidden><h2>Recibimos tu solicitud</h2><p>La vamos a evaluar y en un máximo de 48 horas te contactamos por WhatsApp al número que nos dejaste.</p><p><a class="btn" href="/tiendas/">Ver las tiendas</a></p></div>
 <div class="pto"><h3>¿Aún no tienes tienda en línea?</h3><p>Con Gestión de Negocio VM tienes tu tienda, tus productos aparecen aquí solos y además llevas ventas, inventario y caja. <a href="/para-tu-negocio/">Ver «Para tu negocio»</a></p></div>
 </section>
 <script>
@@ -389,9 +390,13 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
     ev.preventDefault();
     var d = {}, falta = false;
     [].forEach.call(f.elements, function (c) { if (!c.name) return; d[c.name] = String(c.value || '').trim(); var mal = c.required && !d[c.name]; c.setAttribute('aria-invalid', mal ? 'true' : 'false'); if (mal) falta = true; });
-    e.hidden = !falta; if (falta) { var p = f.querySelector('[aria-invalid="true"]'); if (p) p.focus(); return; }
-    var t = 'Hola, quiero aparecer en Tiendas Catrachas (L 150 al mes).\\n\\n' + 'Negocio: ' + d.negocio + '\\nNombre: ' + d.nombre + '\\nWhatsApp: ' + d.whatsapp + (d.tipo ? '\\nTipo de negocio: ' + d.tipo : '') + '\\nCiudad: ' + d.ciudad + '\\nMi tienda: ' + d.enlace + (d.nota ? '\\nNota: ' + d.nota : '');
-    location.href = '${WA}?text=' + encodeURIComponent(t);
+    e.textContent = 'Llena los campos marcados para poder enviarlo.'; e.hidden = !falta; if (falta) { var p = f.querySelector('[aria-invalid="true"]'); if (p) p.focus(); return; }
+    var b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = 'Enviando…';
+    fetch('${API}', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ action: 'solicitudDir', data: d }) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r || !r.ok) throw new Error((r && r.error) || 'No se pudo enviar');
+        f.hidden = true; var ok = document.getElementById('f-ok'); ok.hidden = false; ok.focus(); ok.scrollIntoView({ block: 'center' }); })
+      .catch(function (x) { b.disabled = false; b.textContent = 'Enviar solicitud'; e.textContent = (x && x.message && x.message.length < 140 && !/fetch|network|json/i.test(x.message) ? x.message : 'No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.'); e.hidden = false; });
   });
 })();
 </script>` }));
