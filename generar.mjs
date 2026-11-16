@@ -8,6 +8,8 @@ import { writeFileSync, mkdirSync, readFileSync, rmSync, readdirSync } from 'nod
 import { dirname, join } from 'node:path';
 
 const SITIO = 'https://molinasoluciones.com';
+// Imágenes de portada del inicio (portadas/1.jpg, 2.jpg…): marcos ilustrados con el centro en blanco para el título
+const PORTADAS = readdirSync(new URL('./portadas/', import.meta.url)).filter(f => /^\d+\.jpg$/.test(f)).map(f => parseInt(f, 10)).sort((a, b) => a - b);
 const TIENDA_URL = process.env.TIENDA_URL || 'https://josevic504-bot.github.io/negocio/'; // cambia al mover el repositorio
 const API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
@@ -186,6 +188,7 @@ const FILTRO = `<script>
     [].forEach.call(l.children, function (a) { var ok = (!t || a.getAttribute('data-q').indexOf(t) >= 0) && (!ci || a.getAttribute('data-c') === ci); a.hidden = !ok; if (ok) v++; });
     if (n) n.hidden = v > 0; }
   if (q) q.addEventListener('input', f); if (c) c.addEventListener('change', f);
+  try { var pq = new URLSearchParams(location.search).get('q'); if (q && pq) { q.value = pq; f(); } } catch (e) {}
 })();
 </script>`;
 
@@ -271,6 +274,7 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
+  for (const n of PORTADAS) archivos[`/portadas/${n}.jpg`] = readFileSync(new URL(`./portadas/${n}.jpg`, import.meta.url));
   archivos['/fondo.jpg'] = readFileSync(new URL('./fondo.jpg', import.meta.url)); // fondo de dibujos de la cultura hondureña (color reducido)
   archivos['/medir.js'] = readFileSync(new URL('./medir.js', import.meta.url));
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
@@ -407,8 +411,15 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
 
   // Página de inicio del dominio: primero los negocios; los tipos de negocio, en un párrafo
   const probar = esc(TIENDA_URL) + '?src=sitio', top = T.slice(0, 12);
+  const nCiud = new Set(T.map(t => t.ciudadSlug)).size;
+  const girosTop = Object.keys(GIROS).map(g => [g, T.filter(t => t.giros.includes(g)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const buscaPortada = `<form class="pt-busca" action="/tiendas/" method="get" role="search"><label><span class="oculto">Buscar tienda</span><input name="q" type="search" placeholder="¿Qué buscas? Flores, comida, mascotas…" autocomplete="off"></label><button type="submit">Buscar</button></form><script>if (innerWidth < 641) document.querySelector('.pt-busca input').placeholder = '¿Qué buscas?';</script>${girosTop.length ? `<div class="pt-chips">${girosTop.map(([g]) => `<a href="/tiendas/${slug(GIROS[g])}/">${esc(GIROS[g])}</a>`).join('')}</div>` : ''}`;
   archivos['/index.html'] = pagina({ ruta: '/', marca: true, medir: 'tc-inicio', title: 'Molina Soluciones Digitales · Negocios de Honduras con tienda en línea', desc: 'Conoce los negocios de Honduras que venden en línea con Gestión de Negocio VM y crea la tienda de tu negocio.', ld: listaLd('Negocios con tienda en línea', top),
-    cuerpo: `<section class="hero"><h1>Negocios de Honduras con tienda en línea</h1><p>Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.</p></section>
+    cuerpo: `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}" style="background-image:url(/portadas/${n}.jpg)"></div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>Negocios de Honduras con tienda en línea</h1><p>Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.</p>${buscaPortada}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
+<script>(function () { var s = [].slice.call(document.querySelectorAll('#portadas .pt')), d = [].slice.call(document.querySelectorAll('#pt-dots button')), i = 0, t = 0; if (s.length < 2) return;
+  function ir(n) { i = (n + s.length) % s.length; s.forEach(function (e, k) { e.classList.toggle('on', k === i); }); d.forEach(function (e, k) { e.classList.toggle('on', k === i); }); }
+  function auto() { clearInterval(t); if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) t = setInterval(function () { ir(i + 1); }, 5000); }
+  d.forEach(function (e, k) { e.addEventListener('click', function () { ir(k); auto(); }); }); auto(); })();</script>
 <section class="cont"><p class="cuenta">${T.length > top.length ? 'Los ' + top.length + ' más visitados' : T.length + (T.length === 1 ? ' negocio' : ' negocios') + ' · primero los más visitados'}</p>
 ${rejilla(top)}
 ${T.length > top.length ? `<p class="mas"><a class="btn linea" href="/tiendas/">Ver los ${T.length} negocios</a></p>` : `<p class="mas"><a class="btn linea" href="/tiendas/">Buscar por ciudad o tipo de negocio</a></p>`}

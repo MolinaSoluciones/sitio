@@ -157,3 +157,45 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:url(/fondo.
 .vacio{margin-left:auto;margin-right:auto}.vacio[hidden]{display:none}
 .cont>h1,.cont>.tit,.cont>.sub{background:rgba(251,248,242,.88);border-radius:10px;padding:2px 10px;margin-left:-10px;display:table}
 .pie{background:rgba(251,248,242,.92)}
+/* Portada del inicio: marco ilustrado con el título en el centro blanco (admite varias imágenes en carrusel) */
+.hero.portada{background:transparent;padding:16px 16px 4px;display:block;height:auto;min-height:0}
+.hero.portada>.marco{position:relative;width:100%;max-width:1160px;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 6px 24px rgba(60,10,30,.14);container-type:inline-size}
+.portadas,.pt{position:absolute;inset:0}
+.pt{background:center/cover no-repeat;opacity:0;transition:opacity .9s ease}
+.pt.on{opacity:1}
+.hero.portada .hero-t{position:absolute;left:27%;right:27%;top:22%;bottom:20%;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.hero.portada .ceja{font-size:max(11px,1.15cqw);letter-spacing:.25em;text-transform:uppercase;color:var(--magenta);font-weight:700}
+.hero.portada h1{color:var(--vino);font-size:max(20px,3.1cqw);margin:.2em 0 0}
+.hero.portada p{font-family:Inter,system-ui,sans-serif;font-weight:400;color:var(--tinta);font-size:max(13px,1.4cqw);margin:.5em 0 0}
+.pt-dots{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.pt-dots button{width:44px;height:28px;border:0;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center}
+.pt-dots button::before{content:'';width:100%;height:4px;border-radius:2px;background:rgba(107,20,55,.25)}
+.pt-dots button.on::before{background:var(--magenta)}
+@media (prefers-reduced-motion:reduce){.pt{transition:none}}
+.hero.portada .hero-t{top:20%;bottom:17%}
+.pt-busca{display:flex;gap:6px;margin:1.6cqw auto 0;width:100%;max-width:520px;background:#fff;border:1.5px solid rgba(107,20,55,.28);border-radius:999px;padding:4px;box-shadow:0 4px 14px rgba(60,10,30,.10)}
+.pt-busca label{flex:1;display:flex}
+.pt-busca input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15px;padding:0 14px;color:var(--tinta);outline:none}
+.pt-busca button{border:0;border-radius:999px;background:var(--magenta);color:#fff;font:inherit;font-weight:700;font-size:15px;padding:0 20px;height:42px;cursor:pointer}
+.pt-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:1.1cqw}
+.pt-chips a{font-size:13px;padding:5px 12px;border-radius:999px;background:#FBF1F4;color:var(--vino);text-decoration:none;border:1px solid rgba(107,20,55,.15)}
+.pt-chips a:hover{background:#F6E2E9}
+.pt-dato{position:absolute;left:50%;bottom:21%;transform:translateX(-50%);display:none}
+@media (max-width:640px){
+  .hero.portada{padding:12px 12px 0}
+  .hero.portada>.marco{aspect-ratio:auto;display:flex;flex-direction:column;border-radius:12px}
+  .hero.portada .portadas{position:relative;aspect-ratio:16/9}
+  .hero.portada .hero-t{position:static;padding:14px 16px 18px}
+  .hero.portada h1{font-size:25px;margin-top:0}.hero.portada p{font-size:15px}
+  /* en celular solo el nombre va dentro del centro blanco del marco */
+  .pt-busca{margin-top:14px}.pt-busca input{font-size:16px}
+  .pt-chips{margin-top:10px}
+  /* debajo del nombre, dentro del marco: cuántas tiendas y ciudades */
+  .pt-dato{display:block;top:calc(100cqw * 9 / 16 * .5 + 15cqw);bottom:auto;font-size:13px;color:var(--magenta);font-weight:600;white-space:nowrap;letter-spacing:.02em}
+  .hero.portada .ceja .sl{display:block}
+  .hero.portada .ceja{position:absolute;left:50%;top:calc(100cqw * 9 / 16 * .47);transform:translate(-50%,-50%);width:46cqw;text-align:center;font-family:'Playfair Display',serif;font-size:max(22px,7.2cqw);line-height:1.05;letter-spacing:0;text-transform:none;color:var(--vino)}
+}
+.pt-busca,.pt-busca input,.pt-busca button,.pt-chips a,.pt-dato{font-family:Inter,system-ui,sans-serif}
+.pt-busca input{font-weight:400}.pt-chips a{font-weight:500}
+@media (max-width:640px){.pt-dato{top:calc(100cqw * 9 / 16 * .47 + 12cqw)}}
+.pt-busca{box-sizing:border-box}.pt-busca label{min-width:0}.pt-busca input{width:100%}.pt-busca button{flex-shrink:0}
