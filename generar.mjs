@@ -80,6 +80,7 @@ const fotoSrc = (f, ancho) => {
   return '';
 };
 const waLink = tel => { const d = String(tel || '').replace(/\D/g, ''); const n = d.length === 8 ? '504' + d : d; return n.length >= 11 ? 'https://wa.me/' + n : ''; };
+const idMedir = t => String(t.id).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
 const linkTienda = (t, extra) => TIENDA_URL + '?tienda=' + encodeURIComponent(t.id) + '&src=catrachas' + (extra || '');
 
 /* ---------- datos ---------- */
@@ -128,7 +129,7 @@ function preparar(crudas) {
 /* ---------- piezas de página ---------- */
 const CSS = readFileSync(new URL('./estilo.css', import.meta.url), 'utf8');
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
-function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina }) {
+function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina, medir }) {
   const url = SITIO + ruta;
   return `<!doctype html>
 <html lang="es">
@@ -157,8 +158,8 @@ ${cuerpo}
 </main>
 <footer class="pie">${marca ? `<p>Molina Soluciones Digitales · San Pedro Sula, Honduras</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="${WA}" rel="noopener">WhatsApp</a></p>` : `<p>Cada tienda es responsable de sus productos, precios y entregas.</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="/">Molina Soluciones Digitales</a></p>`}</footer>
 ${modulo || sinEsquina ? '' : '<a class="esquina" href="/aparecer/">¿Ya tienes tienda? Aparece aquí</a>'}
-<script>(window.mvq = window.mvq || []).push('catrachas')</script>
-<script src="${esc(TIENDA_URL)}visitas.js?v=1" defer></script>
+${medir ? `<script>window.tcPagina = ${JSON.stringify(String(medir).slice(0, 30))};</script>` : ''}
+<script src="/medir.js" defer></script>
 </body>
 </html>
 `;
@@ -190,7 +191,7 @@ const FILTRO = `<script>
 
 function producto(t, p) {
   const et = p.agotado ? '<span class="et out">Agotado</span>' : p.stock !== undefined ? `<span class="et">${esc(String(Math.floor(num(p.stock))))} disp.</span>` : '';
-  return `<a class="prod${p.agotado ? ' dis' : ''}" href="${esc(linkTienda(t))}"><div class="ph">${p.foto ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span>${iniciales(p.nombre)}</span>`}${p.nuevo ? '<span class="nw">Nuevo</span>' : ''}${et}</div>
+  return `<a class="prod${p.agotado ? ' dis' : ''}" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}"><div class="ph">${p.foto ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span>${iniciales(p.nombre)}</span>`}${p.nuevo ? '<span class="nw">Nuevo</span>' : ''}${et}</div>
 <div class="bd">${p.cat ? `<div class="cat">${esc(p.cat)}</div>` : ''}<div class="nm">${esc(p.nombre)}</div><div class="pr">${p.desde ? '<small>desde </small>' : ''}${esc(t.moneda)}&nbsp;${fmtN(p.precio)}</div>${p.esp ? `<div class="esp">${esc(t.moneda)}&nbsp;${fmtN(p.esp.p)} desde ${p.esp.m} piezas</div>` : ''}</div></a>`;
 }
 
@@ -211,7 +212,7 @@ function generar(T) {
     ['¿Cómo hago para que mi negocio aparezca aquí?', 'Si usas Gestión de Negocio VM, enciende «Aparecer en Tiendas Catrachas» dentro del programa. Si ya tienes tu tienda en otro lado, puedes aparecer por L 150 al mes: toca «Aparece aquí», llena el formulario y te contactamos en 48 horas.']];
 
   // Portada del directorio
-  poner('/tiendas/', pagina({ ruta: '/tiendas/', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
+  poner('/tiendas/', pagina({ ruta: '/tiendas/', medir: 'tc-dir', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
     ld: listaLd('Tiendas Catrachas', T),
     cuerpo: `<section class="hero"><h1>Tiendas en línea de Honduras</h1><p>Negocios catrachos con su tienda online. Entra, mira el catálogo y haz tu pedido por internet directo con el negocio, a domicilio o para recoger.</p>${buscador}</section>
 <section class="cont">${chips([['Todos', '/tiendas/', true], ...girosCon.map(g => [GIROS[g], '/tiendas/' + slug(GIROS[g]) + '/'])])}
@@ -224,14 +225,14 @@ ${invita('¿Tienes un negocio?', 'Crea tu tienda en línea con Gestión de Negoc
   // Por tipo de negocio, y por tipo de negocio + ciudad
   girosCon.forEach(g => {
     const gn = GIROS[g], gs = slug(gn), l = T.filter(t => t.giros.includes(g)), cs = ciudades.filter(([s]) => l.some(t => t.ciudadSlug === s));
-    poner(`/tiendas/${gs}/`, pagina({ ruta: `/tiendas/${gs}/`, title: `${gn} en Honduras · Tiendas Catrachas`, desc: `${gn} de Honduras con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.`, ld: listaLd(gn + ' en Honduras', l),
+    poner(`/tiendas/${gs}/`, pagina({ ruta: `/tiendas/${gs}/`, medir: 'tc-giro-' + g, title: `${gn} en Honduras · Tiendas Catrachas`, desc: `${gn} de Honduras con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.`, ld: listaLd(gn + ' en Honduras', l),
       cuerpo: `<section class="cont">${migas([['Tiendas', '/tiendas/'], [gn]])}<h1>${esc(gn)} en Honduras</h1><p class="intro">${esc(gn)} con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.</p>
 ${cs.length ? `<h2 class="sub">Por ciudad</h2>${chips(cs.map(([s, n]) => [n, `/tiendas/${gs}/${s}/`]))}` : ''}
 <p class="cuenta">${l.length} ${l.length === 1 ? 'tienda' : 'tiendas'}</p>${rejilla(l)}</section>` }));
     urls.push(`/tiendas/${gs}/`);
     cs.forEach(([s, n]) => {
       const lc = l.filter(t => t.ciudadSlug === s), otras = cs.filter(([x]) => x !== s), otros = girosCon.filter(x => x !== g && T.some(t => t.ciudadSlug === s && t.giros.includes(x)));
-      poner(`/tiendas/${gs}/${s}/`, pagina({ ruta: `/tiendas/${gs}/${s}/`, title: `${gn} en ${n} · Tiendas Catrachas`, desc: `${gn} de ${n}, Honduras, con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.`, ld: listaLd(`${gn} en ${n}`, lc),
+      poner(`/tiendas/${gs}/${s}/`, pagina({ ruta: `/tiendas/${gs}/${s}/`, medir: 'tc-gc-' + g + '-' + s, title: `${gn} en ${n} · Tiendas Catrachas`, desc: `${gn} de ${n}, Honduras, con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.`, ld: listaLd(`${gn} en ${n}`, lc),
         cuerpo: `<section class="cont">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [n]])}<h1>${esc(gn)} en ${esc(n)}</h1><p class="intro">${esc(gn)} de ${esc(n)} con tienda en línea. Mira lo que ofrecen y haz tu pedido directo con el negocio.</p>
 <p class="cuenta">${lc.length} ${lc.length === 1 ? 'tienda' : 'tiendas'}</p>${rejilla(lc)}
 ${otras.length ? `<h2 class="sub">${esc(gn)} en otras ciudades</h2>${chips(otras.map(([x, xn]) => [xn, `/tiendas/${gs}/${x}/`]))}` : ''}
@@ -244,7 +245,7 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
   // Por ciudad
   ciudades.forEach(([s, n]) => {
     const l = T.filter(t => t.ciudadSlug === s);
-    poner(`/tiendas/en/${s}/`, pagina({ ruta: `/tiendas/en/${s}/`, title: `Tiendas en línea en ${n} · Tiendas Catrachas`, desc: `Negocios de ${n}, Honduras, con tienda en línea. Mira su catálogo y haz tu pedido directo con el negocio.`, ld: listaLd('Tiendas en ' + n, l),
+    poner(`/tiendas/en/${s}/`, pagina({ ruta: `/tiendas/en/${s}/`, medir: 'tc-ciudad-' + s, title: `Tiendas en línea en ${n} · Tiendas Catrachas`, desc: `Negocios de ${n}, Honduras, con tienda en línea. Mira su catálogo y haz tu pedido directo con el negocio.`, ld: listaLd('Tiendas en ' + n, l),
       cuerpo: `<section class="cont">${migas([['Tiendas', '/tiendas/'], [n]])}<h1>Tiendas en línea en ${esc(n)}</h1><p class="intro">Negocios de ${esc(n)} con tienda en línea.</p><p class="cuenta">${l.length} ${l.length === 1 ? 'tienda' : 'tiendas'}</p>${rejilla(l)}</section>` }));
     urls.push(`/tiendas/en/${s}/`);
   });
@@ -254,22 +255,23 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
     const g = t.giros[0], gn = GIROS[g], gs = slug(gn), wa = waLink(t.telefono), ps = t.productos.slice(0, MAX_PROD);
     const desc = txt(`${t.frase || gn + ' en ' + t.ciudad}. Pide desde tu celular y coordina la entrega directo con el negocio.`, 160);
     const datos = [['Horario', t.horario], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Dirección', t.direccion]].filter(x => x[1]);
-    poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, title: `${t.nombre} · ${gn} en ${t.ciudad}`, desc, img: t.portada,
+    poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, medir: 'tc-t-' + idMedir(t), title: `${t.nombre} · ${gn} en ${t.ciudad}`, desc, img: t.portada,
       ld: { '@context': 'https://schema.org', '@type': 'Store', name: t.nombre, description: desc, url: SITIO + '/tiendas/' + t.slug + '/', ...(t.portada && /^https:/.test(t.portada) ? { image: t.portada } : {}),
         address: { '@type': 'PostalAddress', addressLocality: t.ciudad, addressCountry: 'HN', ...(t.direccion ? { streetAddress: t.direccion } : {}) } },
       cuerpo: `<section class="cont ficha">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.ciudad, `/tiendas/${gs}/${t.ciudadSlug}/`]])}
 <div class="portada-f">${t.portada ? `<img src="${esc(t.portada)}" alt="${esc(t.nombre)}">` : `<span>${iniciales(t.nombre)}</span>`}</div>
 <h1>${esc(t.nombre)}</h1><p class="meta">${esc(gn)} · ${esc(t.ciudad)}</p>
 ${t.frase ? `<p class="intro">${esc(t.frase)}</p>` : ''}${t.sobre && t.sobre !== t.frase ? `<p class="sobre">${esc(t.sobre)}</p>` : ''}
-<div class="acciones"><a class="btn grande" href="${esc(linkTienda(t))}">Entrar a la tienda</a>${wa ? `<a class="btn linea" href="${esc(wa)}" rel="nofollow noopener">Escribir por WhatsApp</a>` : ''}</div>
+<div class="acciones"><a class="btn grande" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}">Entrar a la tienda</a>${wa ? `<a class="btn linea" href="${esc(wa)}" rel="nofollow noopener">Escribir por WhatsApp</a>` : ''}</div>
 ${datos.length ? `<dl class="datos">${datos.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
-${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => producto(t, p)).join('\n')}</div>${t.productos.length > ps.length ? `<p class="mas"><a class="btn linea" href="${esc(linkTienda(t))}">Ver los ${t.productos.length} productos en la tienda</a></p>` : ''}` : ''}
+${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => producto(t, p)).join('\n')}</div>${t.productos.length > ps.length ? `<p class="mas"><a class="btn linea" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}">Ver los ${t.productos.length} productos en la tienda</a></p>` : ''}` : ''}
 <div class="caja-l"><h2>Más en ${esc(t.ciudad)}</h2><a href="/tiendas/${gs}/${esc(t.ciudadSlug)}/">${esc(gn)} en ${esc(t.ciudad)}</a><a href="/tiendas/en/${esc(t.ciudadSlug)}/">Todas las tiendas de ${esc(t.ciudad)}</a></div>
 <p class="hecho">Tienda creada con Gestión de Negocio VM · <a href="${esc(TIENDA_URL)}?src=catrachas">Crea la tuya</a></p></section>` }));
     urls.push(`/tiendas/${t.slug}/`);
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
+  archivos['/medir.js'] = readFileSync(new URL('./medir.js', import.meta.url));
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
   archivos['/CNAME'] = 'molinasoluciones.com\n';
   archivos['/compartir.png'] = readFileSync(new URL('./compartir.png', import.meta.url));
@@ -282,7 +284,7 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
     ['¿Trae tienda en línea?', 'Sí. Va incluida en la prueba y después se activa aparte.'], ['¿Cuánto cuesta?', 'Escríbenos por WhatsApp y te damos el precio según lo que necesite tu negocio.']];
   PARA.forEach((pn, k) => {
     const [nombre, que] = NEGOCIOS[k], ps = slug(pn), ej = T.filter(t => t.giros.includes(GIRO_DE[k])).slice(0, 3), ruta = `/programa/${ps}/`;
-    poner(ruta, pagina({ ruta, marca: true, modulo: true, title: `Programa de ventas e inventario para ${pn} en Honduras`, desc: txt(`${que} Además ventas, inventario, caja y tienda en línea desde tu celular. Pruébalo gratis 7 días.`, 160), ld: faqLd(FAQ_PRG),
+    poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-prog-' + GIRO_DE[k], title: `Programa de ventas e inventario para ${pn} en Honduras`, desc: txt(`${que} Además ventas, inventario, caja y tienda en línea desde tu celular. Pruébalo gratis 7 días.`, 160), ld: faqLd(FAQ_PRG),
       cuerpo: `<section class="hero"><h1>Programa de ventas e inventario para ${esc(pn)}</h1><p>${esc(que)}</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
 <section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Programa por tipo de negocio', '/programa/'], [nombre]])}
 <p class="intro">Gestión de Negocio VM es un sistema de punto de venta e inventario para ${esc(pn)} que se usa como una app desde el celular o la computadora: registras tus ventas, controlas tus existencias y cierras tu caja sin cuadernos ni hojas de cálculo.</p>
@@ -293,7 +295,7 @@ ${ej.length ? `<h2 class="tit">Negocios como el tuyo que ya venden en línea</h2
 ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el programa 7 días.')}</section>` }));
     urls.push(ruta);
   });
-  poner('/programa/', pagina({ ruta: '/programa/', marca: true, modulo: true, title: 'Programa de ventas e inventario para negocios de Honduras', desc: 'Gestión de Negocio VM se adapta a tu tipo de negocio: restaurante, floristería, veterinaria, carwash, boutique, pulpería y más. Pruébalo gratis 7 días.',
+  poner('/programa/', pagina({ ruta: '/programa/', marca: true, modulo: true, medir: 'tc-prog', title: 'Programa de ventas e inventario para negocios de Honduras', desc: 'Gestión de Negocio VM se adapta a tu tipo de negocio: restaurante, floristería, veterinaria, carwash, boutique, pulpería y más. Pruébalo gratis 7 días.',
     cuerpo: `<section class="hero"><h1>Un programa para cada tipo de negocio</h1><p>Ventas, inventario, caja y tienda en línea desde tu celular.</p></section>
 <section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Programa por tipo de negocio']])}<div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
 ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríbenos y lo vemos contigo.')}</section>` }));
@@ -338,7 +340,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
   ];
   GUIAS.forEach(g => {
     const ruta = `/guias/${g.s}/`;
-    poner(ruta, pagina({ ruta, marca: true, modulo: true, title: `${g.t} · Guía`, desc: g.d,
+    poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-guia-' + (GUIAS.indexOf(g) + 1), title: `${g.t} · Guía`, desc: g.d,
       ld: { '@context': 'https://schema.org', '@type': 'Article', headline: g.t, description: g.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, mainEntityOfPage: SITIO + ruta },
       cuerpo: `<section class="hero"><h1>${esc(g.t)}</h1><p>${esc(g.d)}</p></section>
 <section class="cont guia">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías', '/guias/'], [g.t]])}<p class="intro">${esc(g.i)}</p>
@@ -348,13 +350,13 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
 <h2 class="tit">Más guías</h2>${chips(GUIAS.filter(x => x !== g).map(x => [x.t, `/guias/${x.s}/`]))}</section>` }));
     urls.push(ruta);
   });
-  poner('/guias/', pagina({ ruta: '/guias/', marca: true, modulo: true, title: 'Guías para dueños de negocio en Honduras', desc: 'Guías prácticas para vender por internet, llevar tu inventario, controlar las ventas al crédito y cerrar tu caja.',
+  poner('/guias/', pagina({ ruta: '/guias/', marca: true, modulo: true, medir: 'tc-guia', title: 'Guías para dueños de negocio en Honduras', desc: 'Guías prácticas para vender por internet, llevar tu inventario, controlar las ventas al crédito y cerrar tu caja.',
     cuerpo: `<section class="hero"><h1>Guías para tu negocio</h1><p>Pasos prácticos para vender más y llevar tu negocio en orden.</p></section>
 <section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías']])}<div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div></section>` }));
   urls.push('/guias/');
 
   // Módulo aparte «Para tu negocio»: el programa por tipo de negocio y las guías (las tiendas van siempre primero en el resto del sitio)
-  poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, title: 'Para tu negocio · Programa de ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
+  poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, medir: 'tc-negocio', title: 'Para tu negocio · Programa de ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
     cuerpo: `<section class="hero"><h1>Un programa hecho para tu tipo de negocio</h1><p>Ventas, inventario, caja y cuentas por cobrar desde tu celular, con tu tienda en línea para aparecer en Tiendas Catrachas.</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
 <section class="cont"><h2 class="tit">¿Qué tipo de negocio tienes?</h2><div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
 <h2 class="tit">Lo que trae para todos</h2><div class="todos">${COMUN.map(([n, d]) => `<div class="pto"><h3>${esc(n)}</h3><p>${esc(d)}</p></div>`).join('')}</div>
@@ -363,7 +365,7 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
   urls.push('/para-tu-negocio/');
 
   // Tiendas que no usan el programa: por ahora solo dejan sus datos y Vic las contacta (L 150 al mes)
-  poner('/aparecer/', pagina({ ruta: '/aparecer/', sinEsquina: true, title: 'Aparece en Tiendas Catrachas con tu tienda · L 150 al mes', desc: '¿Ya tienes tu tienda en línea, tu página o tu catálogo? Aparece en Tiendas Catrachas por L 150 al mes. Déjanos tus datos y te contactamos en 48 horas.',
+  poner('/aparecer/', pagina({ ruta: '/aparecer/', sinEsquina: true, medir: 'tc-aparecer', title: 'Aparece en Tiendas Catrachas con tu tienda · L 150 al mes', desc: '¿Ya tienes tu tienda en línea, tu página o tu catálogo? Aparece en Tiendas Catrachas por L 150 al mes. Déjanos tus datos y te contactamos en 48 horas.',
     cuerpo: `<section class="hero"><h1>Aparece en Tiendas Catrachas</h1><p>¿Ya tienes tu tienda en línea, tu página o tu catálogo en otro lado? También puedes aparecer aquí.</p></section>
 <section class="cont guia">${migas([['Tiendas', '/tiendas/'], ['Aparecer aquí']])}
 <div class="precio"><b>L 150 al mes</b><span>Tu negocio en el directorio, con su nombre, tipo de negocio, ciudad, foto y un botón que lleva a tu tienda.</span></div>
@@ -404,7 +406,7 @@ ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el pr
 
   // Página de inicio del dominio: primero los negocios; los tipos de negocio, en un párrafo
   const probar = esc(TIENDA_URL) + '?src=sitio', top = T.slice(0, 12);
-  archivos['/index.html'] = pagina({ ruta: '/', marca: true, title: 'Molina Soluciones Digitales · Negocios de Honduras con tienda en línea', desc: 'Conoce los negocios de Honduras que venden en línea con Gestión de Negocio VM y crea la tienda de tu negocio.', ld: listaLd('Negocios con tienda en línea', top),
+  archivos['/index.html'] = pagina({ ruta: '/', marca: true, medir: 'tc-inicio', title: 'Molina Soluciones Digitales · Negocios de Honduras con tienda en línea', desc: 'Conoce los negocios de Honduras que venden en línea con Gestión de Negocio VM y crea la tienda de tu negocio.', ld: listaLd('Negocios con tienda en línea', top),
     cuerpo: `<section class="hero"><h1>Negocios de Honduras con tienda en línea</h1><p>Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.</p></section>
 <section class="cont"><p class="cuenta">${T.length > top.length ? 'Los ' + top.length + ' más visitados' : T.length + (T.length === 1 ? ' negocio' : ' negocios') + ' · primero los más visitados'}</p>
 ${rejilla(top)}
