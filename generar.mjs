@@ -4,7 +4,7 @@
 //       node generar.mjs --muestra x.json → usa datos de ejemplo (pruebas y capturas)
 // No usa claves secretas: la lista sale de una función pública de solo lectura y los productos de la misma
 // llamada pública que usa la tienda en línea (por eso salen idénticos).
-import { writeFileSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, rmSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const SITIO = 'https://molinasoluciones.com';
@@ -15,6 +15,32 @@ const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo';
 const SALIDA = process.env.SALIDA || 'publico';
 const MAX_PROD = 60;
+const WA = 'https://wa.me/50433130265'; // el mismo contacto que muestra la app
+// Página de inicio: qué resuelve el programa para cada tipo de negocio
+const NEGOCIOS = [
+  ['Tienda o pulpería', 'Vende rápido, controla tu inventario y lleva las ventas al crédito de cada cliente.'],
+  ['Tienda de variedades', 'Varias secciones en una sola tienda: cada una con sus productos y sus reportes.'],
+  ['Restaurante y comida', 'Mesas por zona, meseros, cocina y pedidos para llevar, a domicilio o desde la mesa.'],
+  ['Boutique, ropa y calzado', 'Tallas y colores con la existencia de cada uno.'],
+  ['Maquillaje y moda por catálogo', 'Tonos, tallas y precio especial por cantidad, en una tienda estilo catálogo.'],
+  ['Floristería', 'Arreglos listos y «Arma tu ramo»: el cliente elige sus flores y tú le mandas el precio.'],
+  ['Manualidades y detalles', 'Pedidos personalizados: el cliente te manda la foto de lo que quiere.'],
+  ['Veterinaria y mascotas', 'Expediente de cada mascota, consultas con receta y carnet de vacunas.'],
+  ['Carwash', 'El patio con placa y tiempo, precio por tamaño de vehículo y lavados apartados en línea.'],
+  ['Servicios', 'Cotizaciones, contratos y plan de pagos firmados desde el celular del cliente.'],
+  ['Tecnología y celulares', 'Ventas, inventario y órdenes de trabajo.'],
+  ['Streaming y suscripciones', 'Vencimientos, renovaciones y la cuenta o el perfil de cada cliente.'],
+  ['Recargas de juegos', 'Una sección por juego en tu tienda en línea.'],
+  ['Compras en línea', 'Pedidos por código, apartados y el seguimiento hasta la entrega.'],
+  ['Vitaminas y suplementos', 'Presentaciones y fecha de vencimiento de cada producto.'],
+  ['Joyería', 'Tu catálogo con fotos, ventas e inventario.'],
+  ['Ferretería', 'Inventario, ventas y cuentas por cobrar.'],
+  ['Farmacia', 'Inventario, ventas y caja al día.'],
+  ['Panadería y repostería', 'Tus productos, ventas y pedidos.'],
+  ['Salón de belleza', 'Servicios, productos y ventas.'],
+  ['Taller mecánico y repuestos', 'Repuestos, servicios y cuentas de tus clientes.'],
+  ['¿Otro tipo de negocio?', 'El programa se adapta: escríbenos y lo vemos contigo.']
+];
 
 const GIROS = {
   tienda: 'Pulperías y tiendas', variedades: 'Tiendas de variedades', ferreteria: 'Ferreterías', comida: 'Restaurantes y comida',
@@ -24,6 +50,15 @@ const GIROS = {
   recargas: 'Recargas de juegos', floristeria: 'Floristerías', manualidades: 'Manualidades y detalles', joyeria: 'Joyerías',
   veterinaria: 'Veterinarias y mascotas', otro: 'Otros negocios'
 };
+
+// Páginas para dueños de negocio: «Programa de ventas e inventario para …» (mismo orden que NEGOCIOS, sin el último)
+const PARA = ['pulperías y tiendas', 'tiendas de variedades', 'restaurantes', 'boutiques de ropa y calzado', 'venta por catálogo', 'floristerías', 'manualidades y detalles', 'veterinarias', 'carwash',
+  'negocios de servicios', 'tiendas de tecnología y celulares', 'venta de streaming', 'recargas de juegos', 'compras en línea', 'vitaminas y suplementos', 'joyerías', 'ferreterías', 'farmacias',
+  'panaderías y reposterías', 'salones de belleza', 'talleres mecánicos y repuestos'];
+const GIRO_DE = ['tienda', 'variedades', 'comida', 'boutique', 'catalogo', 'floristeria', 'manualidades', 'veterinaria', 'carwash', 'servicios', 'tecnologia', 'streaming', 'recargas', 'compras', 'vitaminas', 'joyeria', 'ferreteria', 'farmacia', 'panaderia', 'belleza', 'repuestos'];
+const COMUN = [['Vender y cobrar', 'Desde el celular, con recibo y varias formas de pago.'], ['Inventario', 'Sabes qué hay, qué se acaba y cuánto te costó.'], ['Caja y cierre', 'Abres, cierras y la caja te cuadra.'], ['Cuentas por cobrar', 'Quién te debe, cuánto, y su abono registrado.'], ['Reportes', '«¿Cómo me fue hoy?» te lo cuenta en palabras y números.'], ['Tienda en línea', 'Tu catálogo en un enlace para que te hagan pedidos. Incluida en la prueba; después se activa aparte.']];
+const faq = l => `<div class="faq">${l.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div>`;
+const faqLd = l => ({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: l.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) });
 
 /* ---------- utilidades ---------- */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -90,7 +125,7 @@ function preparar(crudas) {
 /* ---------- piezas de página ---------- */
 const CSS = readFileSync(new URL('./estilo.css', import.meta.url), 'utf8');
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
-function pagina({ ruta, title, desc, cuerpo, ld, img }) {
+function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo }) {
   const url = SITIO + ruta;
   return `<!doctype html>
 <html lang="es">
@@ -105,19 +140,19 @@ function pagina({ ruta, title, desc, cuerpo, ld, img }) {
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(url)}">
 <meta property="og:locale" content="es_HN">
-${img && /^https:/.test(img) ? `<meta property="og:image" content="${esc(img)}">` : ''}
+<meta property="og:image" content="${esc(img && /^https:/.test(img) ? img : SITIO + '/compartir.png')}">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#6B1437">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+<link rel="preload" href="/fuentes/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/tiendas/estilo.css">
 ${ld ? jsonld(ld) : ''}
 </head>
 <body>
-<header class="top"><a class="marca" href="/tiendas/"><span class="sello" aria-hidden="true">M</span><span><b>Tiendas Catrachas</b><small>MOLINA SOLUCIONES DIGITALES</small></span></a><a class="cta-top" href="${esc(TIENDA_URL)}?src=catrachas">Crea tu tienda · 7 días gratis</a></header>
+<header class="top"><a class="marca" href="${marca ? '/' : '/tiendas/'}"><span class="sello" aria-hidden="true">M</span><span><b>${marca ? 'Molina' : 'Tiendas Catrachas'}</b><small>${marca ? 'SOLUCIONES DIGITALES' : 'MOLINA SOLUCIONES DIGITALES'}</small></span></a><nav class="menu" aria-label="Secciones"><a href="/tiendas/"${modulo ? '' : ' class="on"'}>Tiendas</a><a href="/para-tu-negocio/"${modulo ? ' class="on"' : ''}>Para tu negocio</a></nav></header>
 <main>
 ${cuerpo}
 </main>
-<footer class="pie"><p>Cada tienda es responsable de sus productos, precios y entregas.</p><p><a href="/tiendas/">Tiendas Catrachas</a> · Molina Soluciones Digitales</p></footer>
+<footer class="pie">${marca ? `<p>Molina Soluciones Digitales · San Pedro Sula, Honduras</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="${WA}" rel="noopener">WhatsApp</a></p>` : `<p>Cada tienda es responsable de sus productos, precios y entregas.</p><p><a href="/tiendas/">Tiendas Catrachas</a> · <a href="/para-tu-negocio/">Para tu negocio</a> · <a href="/">Molina Soluciones Digitales</a></p>`}</footer>
 <script>(window.mvq = window.mvq || []).push('catrachas')</script>
 <script src="${esc(TIENDA_URL)}visitas.js?v=1" defer></script>
 </body>
@@ -164,15 +199,21 @@ function generar(T) {
   const girosCon = Object.keys(GIROS).filter(g => T.some(t => t.giros.includes(g)));
   const selCiudad = ciudades.length > 1 ? `<label class="sel"><span class="oculto">Ciudad</span><select id="ciudad"><option value="">Todas las ciudades</option>${ciudades.map(([s, n]) => `<option value="${esc(s)}">${esc(n)}</option>`).join('')}</select></label>` : '';
   const buscador = `<div class="buscar"><label class="caja"><span class="oculto">Buscar tienda</span><input id="buscar" type="search" placeholder="Busca una tienda o un tipo de negocio" autocomplete="off"></label>${selCiudad}</div>`;
-  const urls = [];
+  const urls = ['/'];
+  const FAQ_DIR = [['¿Cómo hago un pedido?', 'Entra a la tienda que te interesa, elige tus productos y envía el pedido. El negocio lo recibe en su programa y te atiende directamente.'],
+    ['¿Cómo se paga?', 'Cada negocio define sus formas de pago, por ejemplo efectivo o transferencia. Las ves en su página antes de pedir.'],
+    ['¿Quién entrega mi pedido?', 'El negocio al que le compras. Cada uno indica si entrega a domicilio, si es para recoger o las dos.'],
+    ['¿Tiendas Catrachas vende los productos?', 'No. Es un directorio: cada tienda es de su dueño, que es quien responde por sus productos, precios y entregas.'],
+    ['¿Cómo hago para que mi negocio aparezca aquí?', 'Creando tu tienda en línea con Gestión de Negocio VM y encendiendo «Aparecer en Tiendas Catrachas» dentro del programa.']];
 
   // Portada del directorio
-  poner('/tiendas/', pagina({ ruta: '/tiendas/', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Negocios de Honduras con su tienda en línea: mira su catálogo y haz tu pedido directo con el negocio.',
+  poner('/tiendas/', pagina({ ruta: '/tiendas/', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
     ld: listaLd('Tiendas Catrachas', T),
-    cuerpo: `<section class="hero"><h1>Tiendas en línea de Honduras</h1><p>Negocios catrachos con su tienda en línea. Entra, mira el catálogo y haz tu pedido directo con el negocio.</p>${buscador}</section>
+    cuerpo: `<section class="hero"><h1>Tiendas en línea de Honduras</h1><p>Negocios catrachos con su tienda online. Entra, mira el catálogo y haz tu pedido por internet directo con el negocio, a domicilio o para recoger.</p>${buscador}</section>
 <section class="cont">${chips([['Todos', '/tiendas/', true], ...girosCon.map(g => [GIROS[g], '/tiendas/' + slug(GIROS[g]) + '/'])])}
 <p class="cuenta">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · primero las más visitadas</p>
 ${rejilla(T)}
+<h2 class="tit">Preguntas frecuentes</h2>${faq(FAQ_DIR)}
 ${invita('¿Tienes un negocio?', 'Crea tu tienda en línea con Gestión de Negocio VM: catálogo, pedidos, inventario y caja en un solo programa. Y aparece aquí.')}</section>${FILTRO}` }));
   urls.push('/tiendas/');
 
@@ -225,13 +266,105 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
-  archivos['/sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${esc(SITIO + u)}</loc></url>`).join('\n')}\n</urlset>\n`;
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
   archivos['/CNAME'] = 'molinasoluciones.com\n';
+  archivos['/compartir.png'] = readFileSync(new URL('./compartir.png', import.meta.url));
+  for (const f of readdirSync(new URL('./fuentes/', import.meta.url))) archivos['/fuentes/' + f] = readFileSync(new URL('./fuentes/' + f, import.meta.url));
   archivos['/404.html'] = pagina({ ruta: '/404.html', title: 'Página no encontrada · Tiendas Catrachas', desc: 'Esta página ya no existe.', cuerpo: `<section class="cont"><h1>Esta página ya no existe</h1><p class="intro">Puede que la tienda haya dejado de aparecer aquí.</p><p><a class="btn" href="/tiendas/">Ver todas las tiendas</a></p></section>` });
-  // Página de inicio del dominio: provisional, hasta que exista la página de marca
-  archivos['/index.html'] = pagina({ ruta: '/', title: 'Molina Soluciones Digitales · Programas para negocios de Honduras', desc: 'Programas de ventas, inventario y tienda en línea para negocios de Honduras. Conoce Tiendas Catrachas.',
-    cuerpo: `<section class="hero"><h1>Molina Soluciones Digitales</h1><p>Programas de ventas, inventario y tienda en línea para negocios de Honduras.</p><p class="dos"><a class="btn oro" href="/tiendas/">Ver Tiendas Catrachas</a> <a class="btn linea claro" href="${esc(TIENDA_URL)}?src=catrachas">Conocer Gestión de Negocio VM</a></p></section>` });
+  // Páginas para dueños de negocio (una por tipo de negocio) y su índice
+  const prob = esc(TIENDA_URL) + '?src=sitio';
+  const FAQ_PRG = [['¿Puedo probarlo gratis?', 'Sí. La prueba dura 7 días e incluye la tienda en línea.'], ['¿Funciona en el celular?', 'Sí. Se usa desde el celular y también desde una computadora.'],
+    ['¿Trae tienda en línea?', 'Sí. Va incluida en la prueba y después se activa aparte.'], ['¿Cuánto cuesta?', 'Escríbenos por WhatsApp y te damos el precio según lo que necesite tu negocio.']];
+  PARA.forEach((pn, k) => {
+    const [nombre, que] = NEGOCIOS[k], ps = slug(pn), ej = T.filter(t => t.giros.includes(GIRO_DE[k])).slice(0, 3), ruta = `/programa/${ps}/`;
+    poner(ruta, pagina({ ruta, marca: true, modulo: true, title: `Programa de ventas e inventario para ${pn} en Honduras`, desc: txt(`${que} Además ventas, inventario, caja y tienda en línea desde tu celular. Pruébalo gratis 7 días.`, 160), ld: faqLd(FAQ_PRG),
+      cuerpo: `<section class="hero"><h1>Programa de ventas e inventario para ${esc(pn)}</h1><p>${esc(que)}</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
+<section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Programa por tipo de negocio', '/programa/'], [nombre]])}
+<p class="intro">Gestión de Negocio VM es un sistema de punto de venta e inventario para ${esc(pn)} que se usa como una app desde el celular o la computadora: registras tus ventas, controlas tus existencias y cierras tu caja sin cuadernos ni hojas de cálculo.</p>
+<h2 class="tit">Lo que hace por tu negocio</h2><div class="todos"><div class="pto dest"><h3>${esc(nombre)}</h3><p>${esc(que)}</p></div>${COMUN.map(([n, d]) => `<div class="pto"><h3>${esc(n)}</h3><p>${esc(d)}</p></div>`).join('')}</div>
+${ej.length ? `<h2 class="tit">Negocios como el tuyo que ya venden en línea</h2><div class="rejilla">${ej.map(tarjeta).join('')}</div>` : ''}
+<h2 class="tit">Preguntas frecuentes</h2>${faq(FAQ_PRG)}
+${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el programa 7 días.')}</section>` }));
+    urls.push(ruta);
+  });
+  poner('/programa/', pagina({ ruta: '/programa/', marca: true, modulo: true, title: 'Programa de ventas e inventario para negocios de Honduras', desc: 'Gestión de Negocio VM se adapta a tu tipo de negocio: restaurante, floristería, veterinaria, carwash, boutique, pulpería y más. Pruébalo gratis 7 días.',
+    cuerpo: `<section class="hero"><h1>Un programa para cada tipo de negocio</h1><p>Ventas, inventario, caja y tienda en línea desde tu celular.</p></section>
+<section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Programa por tipo de negocio']])}<div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
+${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríbenos y lo vemos contigo.')}</section>` }));
+  urls.push('/programa/');
+
+  // Guías: cada una responde una búsqueda de un dueño de negocio
+  const GUIAS = [
+    { s: 'como-crear-una-tienda-en-linea-en-honduras', t: 'Cómo crear una tienda en línea en Honduras', d: 'Los pasos para vender por internet en Honduras: catálogo con fotos, formas de pago, entregas y cómo dar a conocer tu enlace.',
+      i: 'No necesitas una página web hecha a la medida para vender por internet. Lo que necesitas es un catálogo ordenado, una forma clara de recibir pedidos y constancia para compartir tu enlace.',
+      p: [['Ordena lo que vendes', 'Haz la lista de tus productos con nombre, precio y categoría. Empieza con los que más se venden; el resto lo agregas después.'],
+        ['Tómale foto a cada producto', 'Una foto clara, con buena luz y fondo limpio, vende más que una descripción larga. Usa el mismo estilo en todas para que el catálogo se vea ordenado.'],
+        ['Define cómo te pagan', 'Decide qué aceptas: efectivo contra entrega, transferencia, billetera electrónica o enlace de pago con tarjeta. Dilo antes de que el cliente pida, no después.'],
+        ['Define cómo entregas', 'A domicilio, para recoger o las dos. Si cobras envío, pon el costo a la vista. Si hay un pedido mínimo, también.'],
+        ['Comparte tu enlace', 'Una tienda en línea no vende sola: ponla en tu estado de WhatsApp, en tu perfil de Facebook, Instagram y TikTok, y en un código QR en tu local.'],
+        ['Responde rápido', 'El cliente que pide por internet espera respuesta pronto. Confirma cada pedido y avisa cuando va en camino.']],
+      vm: 'Tu catálogo sale de los mismos productos que ya tienes en el programa, con sus fotos y existencias. Los pedidos llegan solos, el cliente puede seguir el suyo y tu tienda puede aparecer en Tiendas Catrachas. La tienda en línea va incluida en la prueba y después se activa aparte.' },
+    { s: 'como-llevar-el-inventario-de-tu-negocio', t: 'Cómo llevar el inventario de tu negocio desde el celular', d: 'Un método sencillo para controlar existencias, saber qué se acaba y cuánto te costó cada producto, sin cuadernos ni hojas de cálculo.',
+      i: 'Llevar inventario no es contar por contar: es saber qué tienes, qué se está acabando y cuánto dinero tienes detenido en producto.',
+      p: [['Registra cada producto una sola vez', 'Nombre, categoría, precio de venta y costo. Sin el costo no puedes saber cuánto ganas.'],
+        ['Anota la existencia inicial', 'Cuenta lo que hay hoy y pártelo desde ahí. No hace falta reconstruir el pasado.'],
+        ['Registra las entradas', 'Cada compra a tu proveedor suma existencia. Anótala el mismo día, con su costo.'],
+        ['Deja que las ventas descuenten solas', 'Si cada venta se registra, la existencia baja sin que tengas que restar a mano. Ahí es donde un cuaderno se queda corto.'],
+        ['Fija un mínimo por producto', 'Decide con cuántas unidades quieres que te avise para volver a comprar antes de quedarte sin nada.'],
+        ['Cuenta de vez en cuando', 'Una vez al mes compara lo que dice el sistema con lo que hay en el estante y ajusta la diferencia.']],
+      vm: 'Cada venta descuenta la existencia, cada compra la suma y el programa te muestra lo que se está acabando. Si vendes por tallas, colores o tonos, lleva la existencia de cada uno.' },
+    { s: 'como-controlar-las-ventas-al-credito', t: 'Cómo controlar las ventas al crédito de tu negocio', d: 'Cómo llevar las cuentas por cobrar de tus clientes: quién te debe, cuánto, sus abonos y cómo recordarles el pago sin perder al cliente.',
+      i: 'Vender al crédito ayuda a vender más, pero sin control se convierte en dinero perdido. La clave es que cada deuda y cada abono queden anotados el mismo día.',
+      p: [['Decide a quién le das crédito', 'No a todos. Empieza por clientes que conoces y ponle a cada uno un límite.'],
+        ['Anota la venta en el momento', 'Fecha, cliente, qué llevó y cuánto quedó debiendo. Lo que se deja para después se olvida.'],
+        ['Registra cada abono', 'Con fecha y monto, y entrégale al cliente su comprobante. Así no hay discusiones sobre el saldo.'],
+        ['Revisa la lista cada semana', 'Mira quién lleva más tiempo sin abonar y cuánto suma todo lo que te deben.'],
+        ['Recuerda el pago con respeto', 'Un mensaje corto con el saldo y la fecha funciona mejor que una llamada incómoda.']],
+      vm: 'Cada cliente tiene su cuenta con lo que debe y sus abonos, ves el total por cobrar y puedes mandarle un recordatorio por WhatsApp con su saldo.' },
+    { s: 'como-hacer-el-cierre-de-caja', t: 'Cómo hacer el cierre de caja de tu negocio', d: 'Los pasos para abrir y cerrar caja cada día y que el efectivo cuadre con las ventas, los gastos y los abonos.',
+      i: 'El cierre de caja responde una sola pregunta: ¿el dinero que hay coincide con lo que debería haber? Hacerlo todos los días evita que un faltante pequeño se vuelva grande.',
+      p: [['Abre la caja con un monto fijo', 'Anota con cuánto efectivo empiezas el día. Sin ese dato no hay con qué comparar.'],
+        ['Registra todo lo que entra', 'Ventas en efectivo, abonos de clientes y cualquier otro ingreso, separados de las ventas por transferencia o tarjeta.'],
+        ['Registra todo lo que sale', 'Gastos, pagos a proveedores y retiros. Un gasto sin anotar es un faltante al final del día.'],
+        ['Cuenta el efectivo', 'Al cerrar, cuenta billetes y monedas y compáralo con lo que debería haber: apertura más entradas menos salidas.'],
+        ['Anota la diferencia', 'Si sobra o falta, déjalo escrito con el motivo. Con el tiempo verás si es un error que se repite.']],
+      vm: 'Abres la caja, vendes y registras gastos durante el día, y al cerrar el programa te dice cuánto debería haber para que lo compares con lo que contaste.' }
+  ];
+  GUIAS.forEach(g => {
+    const ruta = `/guias/${g.s}/`;
+    poner(ruta, pagina({ ruta, marca: true, modulo: true, title: `${g.t} · Guía`, desc: g.d,
+      ld: { '@context': 'https://schema.org', '@type': 'Article', headline: g.t, description: g.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, mainEntityOfPage: SITIO + ruta },
+      cuerpo: `<section class="hero"><h1>${esc(g.t)}</h1><p>${esc(g.d)}</p></section>
+<section class="cont guia">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías', '/guias/'], [g.t]])}<p class="intro">${esc(g.i)}</p>
+<ol class="pasos">${g.p.map(([n, d]) => `<li><h2>${esc(n)}</h2><p>${esc(d)}</p></li>`).join('')}</ol>
+<div class="pto"><h3>Cómo se hace en Gestión de Negocio VM</h3><p>${esc(g.vm)}</p></div>
+${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y usa el programa gratis 7 días.')}
+<h2 class="tit">Más guías</h2>${chips(GUIAS.filter(x => x !== g).map(x => [x.t, `/guias/${x.s}/`]))}</section>` }));
+    urls.push(ruta);
+  });
+  poner('/guias/', pagina({ ruta: '/guias/', marca: true, modulo: true, title: 'Guías para dueños de negocio en Honduras', desc: 'Guías prácticas para vender por internet, llevar tu inventario, controlar las ventas al crédito y cerrar tu caja.',
+    cuerpo: `<section class="hero"><h1>Guías para tu negocio</h1><p>Pasos prácticos para vender más y llevar tu negocio en orden.</p></section>
+<section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías']])}<div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div></section>` }));
+  urls.push('/guias/');
+
+  // Módulo aparte «Para tu negocio»: el programa por tipo de negocio y las guías (las tiendas van siempre primero en el resto del sitio)
+  poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, title: 'Para tu negocio · Programa de ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
+    cuerpo: `<section class="hero"><h1>Un programa hecho para tu tipo de negocio</h1><p>Ventas, inventario, caja y cuentas por cobrar desde tu celular, con tu tienda en línea para aparecer en Tiendas Catrachas.</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
+<section class="cont"><h2 class="tit">¿Qué tipo de negocio tienes?</h2><div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
+<h2 class="tit">Lo que trae para todos</h2><div class="todos">${COMUN.map(([n, d]) => `<div class="pto"><h3>${esc(n)}</h3><p>${esc(d)}</p></div>`).join('')}</div>
+<h2 class="tit">Guías</h2><div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div>
+${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el programa 7 días.')}</section>` }));
+  urls.push('/para-tu-negocio/');
+
+  // Página de inicio del dominio: primero los negocios; los tipos de negocio, en un párrafo
+  const probar = esc(TIENDA_URL) + '?src=sitio', top = T.slice(0, 12);
+  archivos['/index.html'] = pagina({ ruta: '/', marca: true, title: 'Molina Soluciones Digitales · Negocios de Honduras con tienda en línea', desc: 'Conoce los negocios de Honduras que venden en línea con Gestión de Negocio VM y crea la tienda de tu negocio.', ld: listaLd('Negocios con tienda en línea', top),
+    cuerpo: `<section class="hero"><h1>Negocios de Honduras con tienda en línea</h1><p>Entra a su tienda, mira el catálogo y haz tu pedido directo con el negocio.</p></section>
+<section class="cont"><p class="cuenta">${T.length > top.length ? 'Los ' + top.length + ' más visitados' : T.length + (T.length === 1 ? ' negocio' : ' negocios') + ' · primero los más visitados'}</p>
+${rejilla(top)}
+${T.length > top.length ? `<p class="mas"><a class="btn linea" href="/tiendas/">Ver los ${T.length} negocios</a></p>` : `<p class="mas"><a class="btn linea" href="/tiendas/">Buscar por ciudad o tipo de negocio</a></p>`}
+<section class="invita"><h2>¿Tienes un negocio?</h2><p>Gestión de Negocio VM es un programa de ventas, inventario, caja y tienda en línea que se adapta a tu tipo de negocio: ${NEGOCIOS.slice(0, -1).map(x => x[0].toLowerCase()).join(', ')}. Si el tuyo no está en la lista, también se adapta.</p><p class="dos"><a class="btn oro" href="/para-tu-negocio/">Ver «Para tu negocio»</a></p></section></section>` });
+  archivos['/sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${esc(SITIO + u)}</loc></url>`).join('\n')}\n</urlset>\n`;
   return urls.length;
 }
 
