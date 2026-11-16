@@ -271,6 +271,7 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
+  archivos['/fondo.jpg'] = readFileSync(new URL('./fondo.jpg', import.meta.url)); // fondo de dibujos de la cultura hondureña (color reducido)
   archivos['/medir.js'] = readFileSync(new URL('./medir.js', import.meta.url));
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
   archivos['/CNAME'] = 'molinasoluciones.com\n';
