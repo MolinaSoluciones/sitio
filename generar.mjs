@@ -4,12 +4,14 @@
 //       node generar.mjs --muestra x.json → usa datos de ejemplo (pruebas y capturas)
 // No usa claves secretas: la lista sale de una función pública de solo lectura y los productos de la misma
 // llamada pública que usa la tienda en línea (por eso salen idénticos).
-import { writeFileSync, mkdirSync, readFileSync, rmSync, readdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const SITIO = 'https://molinasoluciones.com';
 // Imágenes de portada del inicio (portadas/1.jpg, 2.jpg…): marcos ilustrados con el centro en blanco para el título
 const PORTADAS = readdirSync(new URL('./portadas/', import.meta.url)).filter(f => /^\d+\.jpg$/.test(f)).map(f => parseInt(f, 10)).sort((a, b) => a - b);
+// Versiones WebP de cada portada (n-900.webp y n-1600.webp), más livianas; si faltan se usa el .jpg
+const WEBP_P = new Set(PORTADAS.filter(n => existsSync(new URL(`./portadas/${n}-900.webp`, import.meta.url)) && existsSync(new URL(`./portadas/${n}-1600.webp`, import.meta.url))));
 const TIENDA_URL = process.env.TIENDA_URL || 'https://app.molinasoluciones.com/'; // dirección del programa (la anterior josevic504-bot.github.io/negocio redirige aquí)
 const API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
@@ -115,7 +117,7 @@ function preparar(crudas) {
     return {
       id: String(c.id), visitas: c.visitas, slug: s, nombre: txt(n.nombre, 80) || 'Tienda', giros: gs.length ? gs : ['otro'], giroN: txt(n.giro, 60),
       ciudad, ciudadSlug: slug(ciudad), frase: txt(n.dir.frase, 80) || txt(n.eslogan, 80) || txt(n.sobre, 80),
-      sobre: txt(n.sobre, 300), portada: fotoSrc(n.portada, 1400), horario: txt(n.horario, 80), telefono: n.telefono, moneda: txt(n.moneda, 4) || 'L',
+      sobre: txt(n.sobre, 300), portada: fotoSrc(n.portada, 1400), portadaMini: fotoSrc(n.portada, 800), horario: txt(n.horario, 80), telefono: n.telefono, moneda: txt(n.moneda, 4) || 'L',
       entrega: n.entrega === 'domicilio' ? 'A domicilio' : n.entrega === 'recoger' ? 'Para recoger' : 'A domicilio y para recoger',
       pagos: (n.pagos || []).map(p => txt(p, 20)).filter(Boolean).join(' · '), direccion: txt(n.direccion, 120),
       productos: (c.info.productos || []).map(p => {
@@ -130,6 +132,8 @@ function preparar(crudas) {
 
 /* ---------- piezas de página ---------- */
 const CSS = readFileSync(new URL('./estilo.css', import.meta.url), 'utf8');
+// La hoja de estilos va dentro de cada página: así no bloquea la primera pintura (PageSpeed)
+const CSS_MIN = CSS.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*\n\s*/g, '').replace(/\s*([{};:,>])\s*/g, '$1').replace(/;}/g, '}').replace(/<\/style/gi, '');
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
 function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina, medir }) {
   const url = SITIO + ruta;
@@ -150,7 +154,8 @@ function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina,
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#6B1437">
 <link rel="preload" href="/fuentes/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/tiendas/estilo.css">
+<link rel="preload" href="/fuentes/playfair-700.woff2" as="font" type="font/woff2" crossorigin>
+<style>${CSS_MIN}</style>
 ${ld ? jsonld(ld) : ''}
 </head>
 <body>
@@ -171,7 +176,7 @@ const iniciales = s => esc(txt(s, 40).split(' ').slice(0, 2).map(w => w[0] || ''
 function tarjeta(t) {
   const g = GIROS[t.giros[0]];
   return `<article class="tarjeta" data-q="${esc((t.nombre + ' ' + t.giros.map(x => GIROS[x]).join(' ') + ' ' + t.giroN + ' ' + t.ciudad + ' ' + t.frase).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))}" data-c="${esc(t.ciudadSlug)}">
-<a class="portada" href="/tiendas/${esc(t.slug)}/" tabindex="-1" aria-hidden="true">${t.portada ? `<img src="${esc(t.portada)}" alt="" loading="lazy">` : `<span>${iniciales(t.nombre)}</span>`}</a>
+<a class="portada" href="/tiendas/${esc(t.slug)}/" tabindex="-1" aria-hidden="true">${t.portada ? `<img src="${esc(t.portadaMini || t.portada)}" alt="" loading="lazy">` : `<span>${iniciales(t.nombre)}</span>`}</a>
 <div class="cuerpo"><h3><a href="/tiendas/${esc(t.slug)}/">${esc(t.nombre)}</a></h3><p class="meta">${esc(g)} · ${esc(t.ciudad)}</p>${t.frase ? `<p class="frase">${esc(t.frase)}</p>` : ''}<a class="btn" href="/tiendas/${esc(t.slug)}/">Ver tienda</a></div>
 </article>`;
 }
@@ -209,7 +214,7 @@ function generar(T) {
   const buscador = `<div class="buscar"><label class="caja"><span class="oculto">Buscar tienda</span><input id="buscar" type="search" placeholder="Busca una tienda o un tipo de negocio" autocomplete="off"></label>${selCiudad}</div>`;
   const nCiud = new Set(T.map(t => t.ciudadSlug)).size;
   // Portada ilustrada (marco con centro blanco): título y buscador dentro; en celular solo el nombre dentro del marco
-  const portada = (h1, p, extra) => `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}" style="background-image:url(/portadas/${n}.jpg)"></div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>${h1}</h1><p>${p}</p>${extra}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
+  const portada = (h1, p, extra) => `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}">${WEBP_P.has(n) ? `<img src="/portadas/${n}-1600.webp" srcset="/portadas/${n}-900.webp 900w, /portadas/${n}-1600.webp 1600w" sizes="(max-width:1190px) 100vw, 1160px" width="1600" height="900" alt=""${i ? ' loading="lazy"' : ' fetchpriority="high"'}>` : `<img src="/portadas/${n}.jpg" width="1600" height="900" alt=""${i ? ' loading="lazy"' : ' fetchpriority="high"'}>`}</div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>${h1}</h1><p>${p}</p>${extra}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
 <script>(function () { var s = [].slice.call(document.querySelectorAll('#portadas .pt')), d = [].slice.call(document.querySelectorAll('#pt-dots button')), i = 0, t = 0; if (s.length < 2) return;
   function ir(n) { i = (n + s.length) % s.length; s.forEach(function (e, k) { e.classList.toggle('on', k === i); }); d.forEach(function (e, k) { e.classList.toggle('on', k === i); }); }
   function auto() { clearInterval(t); if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) t = setInterval(function () { ir(i + 1); }, 5000); }
@@ -269,7 +274,7 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
       ld: { '@context': 'https://schema.org', '@type': 'Store', name: t.nombre, description: desc, url: SITIO + '/tiendas/' + t.slug + '/', ...(t.portada && /^https:/.test(t.portada) ? { image: t.portada } : {}),
         address: { '@type': 'PostalAddress', addressLocality: t.ciudad, addressCountry: 'HN', ...(t.direccion ? { streetAddress: t.direccion } : {}) } },
       cuerpo: `<section class="cont ficha">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.ciudad, `/tiendas/${gs}/${t.ciudadSlug}/`]])}
-<div class="portada-f">${t.portada ? `<img src="${esc(t.portada)}" alt="${esc(t.nombre)}">` : `<span>${iniciales(t.nombre)}</span>`}</div>
+<div class="portada-f">${t.portada ? `<img src="${esc(t.portada)}" alt="${esc(t.nombre)}" fetchpriority="high">` : `<span>${iniciales(t.nombre)}</span>`}</div>
 <h1>${esc(t.nombre)}</h1><p class="meta">${esc(gn)} · ${esc(t.ciudad)}</p>
 ${t.frase ? `<p class="intro">${esc(t.frase)}</p>` : ''}${t.sobre && t.sobre !== t.frase ? `<p class="sobre">${esc(t.sobre)}</p>` : ''}
 <div class="acciones"><a class="btn grande" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}">Entrar a la tienda</a>${wa ? `<a class="btn linea" href="${esc(wa)}" rel="nofollow noopener">Escribir por WhatsApp</a>` : ''}</div>
@@ -281,7 +286,8 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
-  for (const n of PORTADAS) archivos[`/portadas/${n}.jpg`] = readFileSync(new URL(`./portadas/${n}.jpg`, import.meta.url));
+  for (const n of PORTADAS) { archivos[`/portadas/${n}.jpg`] = readFileSync(new URL(`./portadas/${n}.jpg`, import.meta.url)); if (WEBP_P.has(n)) for (const w of [900, 1600]) archivos[`/portadas/${n}-${w}.webp`] = readFileSync(new URL(`./portadas/${n}-${w}.webp`, import.meta.url)); }
+  archivos['/fondo.webp'] = readFileSync(new URL('./fondo.webp', import.meta.url));
   archivos['/fondo.jpg'] = readFileSync(new URL('./fondo.jpg', import.meta.url)); // fondo de dibujos de la cultura hondureña (color reducido)
   archivos['/medir.js'] = readFileSync(new URL('./medir.js', import.meta.url));
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
