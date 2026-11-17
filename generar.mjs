@@ -113,7 +113,7 @@ function preparar(crudas) {
     let s = slug(n.nombre) || 'tienda';
     if (reservados.has(s) || usados.has(s)) s = s + '-' + slug(c.id);
     usados.add(s);
-    const ciudad = titulo(n.dir.ciudad);
+    const ciudad = titulo(n.dir.ciudad) || 'Honduras'; // sin ciudad escrita (negocios nuevos): aparece como «Honduras» hasta que la escriba
     return {
       id: String(c.id), visitas: c.visitas, slug: s, nombre: txt(n.nombre, 80) || 'Tienda', giros: gs.length ? gs : ['otro'], giroN: txt(n.giro, 60),
       ciudad, ciudadSlug: slug(ciudad), frase: txt(n.dir.frase, 80) || txt(n.eslogan, 80) || txt(n.sobre, 80),
@@ -272,7 +272,7 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
     const datos = [['Horario', t.horario], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Dirección', t.direccion]].filter(x => x[1]);
     poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, medir: 'tc-t-' + idMedir(t), title: `${t.nombre} · ${gn} en ${t.ciudad}`, desc, img: t.portada,
       ld: { '@context': 'https://schema.org', '@type': 'Store', name: t.nombre, description: desc, url: SITIO + '/tiendas/' + t.slug + '/', ...(t.portada && /^https:/.test(t.portada) ? { image: t.portada } : {}),
-        address: { '@type': 'PostalAddress', addressLocality: t.ciudad, addressCountry: 'HN', ...(t.direccion ? { streetAddress: t.direccion } : {}) } },
+        address: { '@type': 'PostalAddress', ...(t.ciudad !== 'Honduras' ? { addressLocality: t.ciudad } : {}), addressCountry: 'HN', ...(t.direccion ? { streetAddress: t.direccion } : {}) } },
       cuerpo: `<section class="cont ficha">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.ciudad, `/tiendas/${gs}/${t.ciudadSlug}/`]])}
 <div class="portada-f">${t.portada ? `<img src="${esc(t.portada)}" alt="${esc(t.nombre)}" fetchpriority="high">` : `<span>${iniciales(t.nombre)}</span>`}</div>
 <h1>${esc(t.nombre)}</h1><p class="meta">${esc(gn)} · ${esc(t.ciudad)}</p>
