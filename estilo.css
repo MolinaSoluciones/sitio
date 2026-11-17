@@ -206,3 +206,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:url(/fondo.
 .hero.portada .buscar input,.hero.portada .buscar select{border:1.5px solid rgba(107,20,55,.28);border-radius:999px;box-shadow:0 4px 14px rgba(60,10,30,.10);font-family:Inter,system-ui,sans-serif;height:46px;box-sizing:border-box}
 @media (max-width:640px){.hero.portada .buscar{flex-wrap:wrap;margin-top:14px}.hero.portada .buscar .sel{flex:1 1 100%}}
 .hero.portada .buscar input,.hero.portada .buscar select{font-size:15px;padding:0 16px}@media (max-width:640px){.hero.portada .buscar input,.hero.portada .buscar select{font-size:16px}}
+/* Contraste: el contenido va sobre un panel crema casi sólido; los dibujos del fondo quedan solo a los lados */
+.cont{background:#FBF8F2;border-radius:18px;box-shadow:0 4px 24px rgba(60,10,30,.08);margin-top:16px;margin-bottom:24px}
+.cont+.cont{margin-top:0}
+.cuenta,.migas,.intro,.sobre,.vacio,.cont>h1,.cont>.tit,.cont>.sub{background:transparent;padding:0;margin-left:0;border-radius:0}
+@media (max-width:640px){.cont{margin:10px 8px 16px;border-radius:14px;padding:16px}}
