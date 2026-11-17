@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 const SITIO = 'https://molinasoluciones.com';
 // Imágenes de portada del inicio (portadas/1.jpg, 2.jpg…): marcos ilustrados con el centro en blanco para el título
 const PORTADAS = readdirSync(new URL('./portadas/', import.meta.url)).filter(f => /^\d+\.jpg$/.test(f)).map(f => parseInt(f, 10)).sort((a, b) => a - b);
-const TIENDA_URL = process.env.TIENDA_URL || 'https://josevic504-bot.github.io/negocio/'; // cambia al mover el repositorio
+const TIENDA_URL = process.env.TIENDA_URL || 'https://app.molinasoluciones.com/'; // dirección del programa (la anterior josevic504-bot.github.io/negocio redirige aquí)
 const API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
 // Llave pública (la misma que ya va en la app): no da acceso a ninguna tabla, solo a la función del directorio
