@@ -134,6 +134,11 @@ function preparar(crudas) {
 const CSS = readFileSync(new URL('./estilo.css', import.meta.url), 'utf8');
 // La hoja de estilos va dentro de cada página: así no bloquea la primera pintura (PageSpeed)
 const CSS_MIN = CSS.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*\n\s*/g, '').replace(/\s*([{};:,>])\s*/g, '$1').replace(/;}/g, '}').replace(/<\/style/gi, '');
+// Nombre e ícono del sitio en los buscadores: se declaran en la página de inicio (WebSite + Organization con logo)
+const MARCA_LD = [
+  { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Molina Soluciones Digitales', alternateName: ['Tiendas Catrachas', 'Molina Soluciones'], url: SITIO + '/' },
+  { '@context': 'https://schema.org', '@type': 'Organization', name: 'Molina Soluciones Digitales', url: SITIO + '/', logo: SITIO + '/icono-512.png' }
+];
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
 function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina, medir }) {
   const url = SITIO + ruta;
@@ -153,10 +158,14 @@ function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina,
 <meta property="og:image" content="${esc(img && /^https:/.test(img) ? img : SITIO + '/compartir.png')}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#6B1437">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="96x96" href="/icono-96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icono-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/fuentes/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fuentes/playfair-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>${CSS_MIN}</style>
-${ld ? jsonld(ld) : ''}
+${ld ? jsonld(ld) : ''}${ruta === '/' ? jsonld(MARCA_LD) : ''}
 </head>
 <body>
 <header class="top"><a class="marca" href="${marca ? '/' : '/tiendas/'}"><span class="sello" aria-hidden="true">M</span><span><b>${marca ? 'Molina' : 'Tiendas Catrachas'}</b><small>${marca ? 'SOLUCIONES DIGITALES' : 'MOLINA SOLUCIONES DIGITALES'}</small></span></a><nav class="menu" aria-label="Secciones"><a href="/tiendas/"${modulo ? '' : ' class="on"'}>Tiendas</a><a href="/para-tu-negocio/"${modulo ? ' class="on"' : ''}>Para tu negocio</a></nav></header>
@@ -293,6 +302,8 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
   archivos['/CNAME'] = 'molinasoluciones.com\n';
   archivos['/compartir.png'] = readFileSync(new URL('./compartir.png', import.meta.url));
+  // Ícono del sitio (sello de la marca): el buscador y la pestaña lo toman de la raíz
+  for (const f of readdirSync(new URL('./iconos/', import.meta.url))) archivos['/' + f] = readFileSync(new URL('./iconos/' + f, import.meta.url));
   for (const f of readdirSync(new URL('./fuentes/', import.meta.url))) archivos['/fuentes/' + f] = readFileSync(new URL('./fuentes/' + f, import.meta.url));
   for (const f of readdirSync(new URL('./pantallas/', import.meta.url))) archivos['/pantallas/' + f] = readFileSync(new URL('./pantallas/' + f, import.meta.url));
   archivos['/404.html'] = pagina({ ruta: '/404.html', title: 'Página no encontrada · Tiendas Catrachas', desc: 'Esta página ya no existe.', cuerpo: `<section class="cont"><h1>Esta página ya no existe</h1><p class="intro">Puede que la tienda haya dejado de aparecer aquí.</p><p><a class="btn" href="/tiendas/">Ver todas las tiendas</a></p></section>` });
@@ -359,7 +370,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
   GUIAS.forEach(g => {
     const ruta = `/guias/${g.s}/`;
     poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-guia-' + (GUIAS.indexOf(g) + 1), title: `${g.t} · Guía`, desc: g.d,
-      ld: { '@context': 'https://schema.org', '@type': 'Article', headline: g.t, description: g.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, mainEntityOfPage: SITIO + ruta },
+      ld: { '@context': 'https://schema.org', '@type': 'Article', headline: g.t, description: g.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales', logo: { '@type': 'ImageObject', url: SITIO + '/icono-512.png' } }, mainEntityOfPage: SITIO + ruta },
       cuerpo: `<section class="hero"><h1>${esc(g.t)}</h1><p>${esc(g.d)}</p></section>
 <section class="cont guia">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías', '/guias/'], [g.t]])}<p class="intro">${esc(g.i)}</p>
 <ol class="pasos">${g.p.map(([n, d]) => `<li><h2>${esc(n)}</h2><p>${esc(d)}</p></li>`).join('')}</ol>
