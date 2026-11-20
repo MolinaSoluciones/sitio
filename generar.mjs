@@ -99,21 +99,26 @@ async function leerTiendas() {
       const q = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'tiendaInfo', data: { negocio: x.id } }) });
       const j = await q.json();
       if (j && j.ok && j.data && j.data.negocio && j.data.negocio.dir) out.push({ id: x.id, visitas: num(x.visitas), info: j.data });
+      // «ok: false» solo es normal cuando la tienda está cerrada o el enlace ya no existe; cualquier otro error es una falla del servidor
+      else if (!j || !j.ok) { const er = String((j && j.error) || 'sin respuesta'); if (!/^TIENDA_CERRADA\||Este enlace de tienda no es válido/.test(er)) { fallas++; console.error('Tienda ' + x.id + ' con error del servidor: ' + er.slice(0, 120)); } }
     } catch (e) { fallas++; console.error('Tienda ' + x.id + ' omitida: ' + e.message); }
   }
-  // Si el servidor falló con todas, no se publica una página vacía: se conserva la anterior
-  if (fallas && !out.length) throw new Error('El servidor no respondió: no se actualiza la página');
+  // Si el servidor falló con todas, o con la mitad o más, no se publica una página vacía o a medias: se conserva la anterior
+  if (fallas && (!out.length || fallas * 2 >= lista.length)) throw new Error('El servidor falló con ' + fallas + ' de ' + lista.length + ' tiendas: no se actualiza la página');
   return out;
 }
 
 function preparar(crudas) {
   const reservados = new Set(['en', ...Object.values(GIROS).map(slug)]), usados = new Set();
+  // La dirección de cada tienda se reparte siempre en el mismo orden (por código, o sea por antigüedad): dos tiendas con el
+  // mismo nombre no se intercambian la dirección de una publicación a otra
+  const slugDe = {};
+  [...crudas].sort((a, b) => String(a.id) < String(b.id) ? -1 : 1).forEach(c => { let s = slug(c.info.negocio.nombre) || 'tienda'; if (reservados.has(s) || usados.has(s)) s = s + '-' + slug(c.id); usados.add(s); slugDe[c.id] = s; });
   return crudas.map(c => {
     const n = c.info.negocio, gs = [...new Set([n.gid, ...(n.giros || []).map(g => g.id)])].filter(g => GIROS[g]);
-    let s = slug(n.nombre) || 'tienda';
-    if (reservados.has(s) || usados.has(s)) s = s + '-' + slug(c.id);
-    usados.add(s);
-    const ciudad = titulo(n.dir.ciudad) || 'Honduras'; // sin ciudad escrita (negocios nuevos): aparece como «Honduras» hasta que la escriba
+    const s = slugDe[c.id];
+    // Ciudad: siempre con la misma forma («SAN PEDRO SULA» y «san pedro sula» son la misma); si no tiene letras («...») cuenta como sin ciudad
+    let ciudad = titulo(String(n.dir.ciudad || '').toLowerCase()); if (!slug(ciudad)) ciudad = 'Honduras'; // sin ciudad escrita (negocios nuevos): aparece como «Honduras» hasta que la escriba
     return {
       id: String(c.id), visitas: c.visitas, slug: s, nombre: txt(n.nombre, 80) || 'Tienda', giros: gs.length ? gs : ['otro'], giroN: txt(n.giro, 60),
       ciudad, ciudadSlug: slug(ciudad), frase: txt(n.dir.frase, 80) || txt(n.eslogan, 80) || txt(n.sobre, 80),
