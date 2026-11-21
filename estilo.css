@@ -212,3 +212,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:url(/fondo.
 .cont+.cont{margin-top:0}
 .cuenta,.migas,.intro,.sobre,.vacio,.cont>h1,.cont>.tit,.cont>.sub{background:transparent;padding:0;margin-left:0;border-radius:0}
 @media (max-width:640px){.cont{margin:10px 8px 16px;border-radius:14px;padding:16px}}
+
+.ej{margin-top:14px;background:#fff;border:1px solid var(--linea);border-radius:16px;padding:6px 16px}
+.ej div{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--linea)}.ej div:first-child{border-top:0}
+.ej span{color:var(--gris)}.ej b{white-space:nowrap}.ej div:last-child b{color:var(--magenta)}
+.errs{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.errs li{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:12px 16px;color:var(--gris)}.errs b{color:var(--tinta)}
