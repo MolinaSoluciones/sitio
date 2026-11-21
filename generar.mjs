@@ -392,7 +392,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Cómo calculo el precio si vendo al por mayor y al detalle?', 'Con la misma fórmula y dos márgenes: uno menor para quien compra por cantidad y otro mayor para quien compra una unidad. Revisa que el precio de mayoreo siga dejando ganancia.'],
         ['¿Cada cuánto debo revisar mis precios?', 'Cada vez que compres mercadería y el costo haya cambiado. Si pasa mucho tiempo sin que revises, lo normal es que tu ganancia se haya ido achicando.']],
       vm: 'A cada producto le escribes su costo y su precio de venta. En cada venta el programa calcula la ganancia, y en «¿Cómo me fue hoy?» ves lo vendido, el costo y lo que ganaste en el día, sin sacar cuentas a mano.' },
-    { borrador: true, s: 'como-saber-cuanto-gana-tu-negocio', t: 'Cómo saber cuánto gana tu negocio', d: 'Vender mucho no es lo mismo que ganar. Cómo sacar la ganancia real de tu negocio en el mes: ventas, costo de lo vendido y gastos, con un ejemplo en lempiras.',
+    { s: 'como-saber-cuanto-gana-tu-negocio', t: 'Cómo saber cuánto gana tu negocio', d: 'Vender mucho no es lo mismo que ganar. Cómo sacar la ganancia real de tu negocio en el mes: ventas, costo de lo vendido y gastos, con un ejemplo en lempiras.',
       i: 'Muchos negocios venden todos los días y aun así no saben si ganan. La cuenta es corta: a lo que vendiste le quitas lo que te costó la mercadería y después los gastos de tener el negocio abierto. Lo que queda es tu ganancia.',
       p: [['Suma lo que vendiste', 'Todas las ventas del mes, en efectivo, por transferencia y al crédito. Esto es lo que entra, no lo que ganas.'],
         ['Réstale el costo de lo vendido', 'Lo que te costó la mercadería que salió, no todo lo que compraste. Lo que sigue en el estante todavía no es costo: es inventario.'],
@@ -410,7 +410,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Cómo sé si mi negocio está perdiendo dinero?', 'Si después de restar costo y gastos el resultado es negativo varios meses seguidos, o si cada vez tienes menos mercadería y menos efectivo, el negocio está gastando su capital.'],
         ['¿Cada cuánto debo sacar la ganancia?', 'Una vez al mes es suficiente para decidir. Mirar la ganancia de cada día ayuda a detectar pronto un problema, pero un solo día no dice cómo va el negocio.']],
       vm: 'El programa guarda el costo de cada producto y lo resta en cada venta. En «¿Cómo me fue hoy?» ves lo vendido, el costo y la ganancia del día, de la semana o del mes, y en Reportes tienes el de ganancias. Los gastos los registras en el mismo programa.' },
-    { borrador: true, s: 'como-vender-por-whatsapp-con-catalogo', t: 'Cómo vender por WhatsApp con un catálogo', d: 'Cómo dejar de mandar fotos una por una: arma un catálogo con precios, comparte un solo enlace y lleva el control de los pedidos que llegan por WhatsApp.',
+    { s: 'como-vender-por-whatsapp-con-catalogo', t: 'Cómo vender por WhatsApp con un catálogo', d: 'Cómo dejar de mandar fotos una por una: arma un catálogo con precios, comparte un solo enlace y lleva el control de los pedidos que llegan por WhatsApp.',
       i: 'Vender por WhatsApp funciona, pero mandar cada foto y cada precio a mano te quita el día. Con un catálogo, el cliente ve todo en un enlace y te escribe cuando ya sabe qué quiere.',
       p: [['Reúne tus productos en un solo lugar', 'Nombre, precio y foto de cada uno. Ordénalos por categoría para que el cliente encuentre rápido lo que busca.'],
         ['Pon siempre el precio', '«Precio al privado» hace que muchos clientes no pregunten. Con el precio a la vista, quien te escribe ya viene decidido.'],
@@ -427,7 +427,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Cómo recibo el pago de un pedido por WhatsApp?', 'Lo más usado es efectivo contra entrega, transferencia bancaria o billetera electrónica. Pide la foto del comprobante antes de despachar cuando el pago no es en efectivo.'],
         ['¿Una tienda en línea vende sola?', 'No. Es una herramienta: los pedidos llegan cuando compartes tu enlace con constancia en tus estados, redes y con tus clientes de siempre.']],
       vm: 'Tu tienda en línea se arma con los productos que ya tienes en el programa, con fotos, precios y existencias. Compartes un solo enlace por WhatsApp, el cliente arma su pedido y te llega al programa con aviso al teléfono. También puedes registrar a mano los pedidos que te hacen por chat o en persona. La tienda en línea va incluida en la prueba y después se activa aparte.' },
-    { borrador: true, s: 'como-llevar-el-control-de-gastos-de-un-negocio', t: 'Cómo llevar el control de gastos de un negocio', d: 'Un método sencillo para anotar los gastos de tu negocio, separarlos de los de la casa y saber cuánto necesitas vender cada día solo para cubrirlos.',
+    { s: 'como-llevar-el-control-de-gastos-de-un-negocio', t: 'Cómo llevar el control de gastos de un negocio', d: 'Un método sencillo para anotar los gastos de tu negocio, separarlos de los de la casa y saber cuánto necesitas vender cada día solo para cubrirlos.',
       i: 'Los gastos no avisan: se van de a poco y al final del mes no sabes en qué se fue el dinero. Anotarlos el mismo día es lo único que te deja ver cuánto cuesta de verdad tener el negocio abierto.',
       p: [['Anota cada gasto el mismo día', 'Fecha, monto y en qué fue. Lo que dejas para el fin de semana ya no lo recuerdas completo.'],
         ['Sepáralos por tipo', 'Alquiler, servicios, sueldos, transporte, empaques y otros. Así ves cuál es el que más pesa.'],
@@ -445,7 +445,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Cómo saco cuánto debo vender para cubrir mis gastos?', 'Divide tus gastos del mes entre tu margen. Con gastos de L 9,600 y un margen de 30 %, necesitas vender L 32,000 al mes solo para cubrirlos.'],
         ['¿Debo anotar lo que saco para mi casa?', 'Sí, pero aparte, como retiro del dueño. No es un gasto del negocio, pero si no lo anotas la caja no te va a cuadrar.']],
       vm: 'Registras cada gasto en el momento, desde el celular. El gasto se descuenta de la caja del día, así el cierre te cuadra, y «¿Cómo me fue hoy?» te dice cuánto pagaste en gastos y cuánto te quedó de ganancia.' },
-    { borrador: true, s: 'como-administrar-una-pulperia', t: 'Cómo administrar una pulpería', d: 'Lo básico para que una pulpería deje ganancia: precios con margen, inventario que no se acaba, ventas al crédito con control y caja cuadrada cada día.',
+    { s: 'como-administrar-una-pulperia', t: 'Cómo administrar una pulpería', d: 'Lo básico para que una pulpería deje ganancia: precios con margen, inventario que no se acaba, ventas al crédito con control y caja cuadrada cada día.',
       i: 'Una pulpería mueve muchos productos de poco margen. Por eso los descuidos pequeños pesan tanto: un precio mal puesto o una cuenta sin cobrar se comen la ganancia de muchas ventas.',
       p: [['Ponle precio a todo con su margen', 'Saca el costo de cada producto por unidad y decide cuánto le ganas. Lo que se vende mucho puede llevar menos margen; lo que tarda, más.'],
         ['Compra según lo que se vende', 'Revisa qué sale cada semana antes de ir al proveedor. Comprar de más amarra tu dinero en productos que se pueden vencer.'],
@@ -463,7 +463,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Conviene vender al crédito en una pulpería?', 'Ayuda a vender más, pero solo con control: clientes conocidos, un límite para cada uno y cada venta anotada el mismo día.'],
         ['¿Puedo llevar la pulpería desde el celular?', 'Sí. Un programa de ventas e inventario en el celular reemplaza el cuaderno: registra ventas, existencias, cuentas por cobrar y la caja.']],
       vm: 'Eliges «Tienda o pulpería» al crear tu cuenta y el programa viene preparado para ese tipo de negocio. Cada venta descuenta la existencia, te avisa de lo que está por agotarse, lleva la cuenta de cada cliente al crédito con su límite y al cerrar la caja te dice cuánto debería haber.' },
-    { borrador: true, s: 'como-hacer-un-arqueo-de-caja', t: 'Cómo hacer un arqueo de caja', d: 'Qué es un arqueo de caja, en qué se diferencia del cierre y cómo hacerlo paso a paso, con un ejemplo en lempiras y qué hacer cuando sobra o falta dinero.',
+    { s: 'como-hacer-un-arqueo-de-caja', t: 'Cómo hacer un arqueo de caja', d: 'Qué es un arqueo de caja, en qué se diferencia del cierre y cómo hacerlo paso a paso, con un ejemplo en lempiras y qué hacer cuando sobra o falta dinero.',
       i: 'Un arqueo de caja es contar el efectivo y compararlo con lo que debería haber según lo anotado. Se puede hacer en cualquier momento del día; cuando se hace al terminar la jornada se le llama cierre de caja.',
       p: [['Ten a mano con cuánto se abrió', 'El monto inicial de la caja es el punto de partida. Sin él no hay contra qué comparar.'],
         ['Suma lo que entró en efectivo', 'Ventas en efectivo y abonos de clientes. Las ventas por transferencia o tarjeta no están en la gaveta: van aparte.'],
@@ -481,7 +481,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Qué hago si falta dinero en la caja?', 'Primero revisa si quedó un gasto o un retiro sin anotar, o una venta por transferencia registrada como efectivo. Si no aparece, anota el faltante con fecha y responsable.'],
         ['¿Y si sobra dinero?', 'También es una diferencia: puede ser una venta que no se registró o un cambio mal dado. Se anota igual que un faltante.']],
       vm: 'El programa lleva la cuenta por ti: apertura, ventas en efectivo, abonos, gastos y pagos del día. Al cerrar la caja te muestra cuánto debería haber, escribes lo que contaste y queda guardada la diferencia.' },
-    { borrador: true, s: 'como-manejar-pedidos-por-encargo-y-apartados', t: 'Cómo manejar pedidos por encargo y apartados', d: 'Cómo llevar los pedidos por encargo y los apartados de tu negocio sin perder dinero: anticipo, fecha límite, estado de cada pedido y qué hacer si el cliente no lo retira.',
+    { s: 'como-manejar-pedidos-por-encargo-y-apartados', t: 'Cómo manejar pedidos por encargo y apartados', d: 'Cómo llevar los pedidos por encargo y los apartados de tu negocio sin perder dinero: anticipo, fecha límite, estado de cada pedido y qué hacer si el cliente no lo retira.',
       i: 'Vender por encargo te deja ofrecer más sin llenar el local de mercadería, pero tiene un riesgo: traer el producto y que el cliente no vuelva. El orden y el anticipo son lo que te protege.',
       p: [['Anota el pedido completo', 'Cliente, teléfono, qué pidió con talla o color, precio y fecha en que lo pidió. Lo que no está escrito se discute después.'],
         ['Pide un anticipo', 'Un pedido sin anticipo es un favor, no una venta. Define qué parte del precio pides para traer el producto.'],
@@ -501,7 +501,6 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
       vm: 'Registras el pedido aunque llegue por WhatsApp o en persona, con sus productos y su estado hasta la entrega, y al entregarlo queda como venta. En el tipo de negocio «Compras en línea» llevas además los apartados: lo que está en camino, lo que ya llegó y lo que pasa a inventario si no lo retiran.' }
   ];
   // Las cuatro primeras guías, ampliadas con ejemplo, errores comunes y preguntas frecuentes (2026-11-21)
-  const MAS_BORRADOR = true; // quitar cuando Vic apruebe la ampliación
   const MAS = {
     'como-crear-una-tienda-en-linea-en-honduras': {
       er: [['Publicar sin precios', 'Obligar al cliente a preguntar el precio de cada cosa hace que muchos se vayan sin escribir.'],
@@ -543,10 +542,10 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
         ['¿Cada cuánto se hace el cierre de caja?', 'Todos los días. Si hay varios turnos o cajeros, uno por turno, para que cada quien responda por el suyo.'],
         ['¿Qué hago si la caja no cuadra?', 'Busca primero un gasto, retiro o venta mal registrada. Si no aparece, anota la diferencia con su fecha: lo importante es ver si se repite.']] }
   };
-  // Lo que está en borrador no se publica: solo se ve en local con PREVIA=1
+  // Una guía con «borrador: true» no se publica: solo se ve en local con PREVIA=1 (para mostrar la vista previa antes de aprobarla)
   const PREVIA = process.env.PREVIA === '1';
   for (let i = GUIAS.length - 1; i >= 0; i--) if (GUIAS[i].borrador && !PREVIA) GUIAS.splice(i, 1);
-  if (PREVIA || !MAS_BORRADOR) GUIAS.forEach(g => Object.assign(g, MAS[g.s] || {}));
+  GUIAS.forEach(g => Object.assign(g, MAS[g.s] || {}));
   GUIAS.forEach(g => {
     const ruta = `/guias/${g.s}/`;
     poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-guia-' + (GUIAS.indexOf(g) + 1), title: `${g.t} · Guía`, desc: g.d,
