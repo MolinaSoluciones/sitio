@@ -130,7 +130,7 @@ function preparar(crudas) {
         const ps = p.vars ? Object.values(p.vars).map(v => num(v.p) || num(p.precio)) : [num(p.precio)];
         const desde = Math.min(...ps, num(p.precio)), max = Math.max(...ps, num(p.precio));
         return { nombre: txt(p.nombre, 90), cat: txt(p.sub || p.categoria, 40), foto: fotoSrc(p.foto), precio: p.vars ? desde : num(p.precio), desde: !!p.vars && desde < max,
-          agotado: !!p.agotado, nuevo: !!p.nuevo && !p.agotado, stock: p.stock, esp: num(p.precioEsp) > 0 && num(p.minEsp) > 1 ? { p: num(p.precioEsp), m: num(p.minEsp) } : null };
+          desc: txt(p.descripcion || p.desc, 400), agotado: !!p.agotado, nuevo: !!p.nuevo && !p.agotado, stock: p.stock, esp: num(p.precioEsp) > 0 && num(p.minEsp) > 1 ? { p: num(p.precioEsp), m: num(p.minEsp) } : null };
       })
     };
   }).filter(t => t.ciudad).sort((a, b) => b.visitas - a.visitas || a.nombre.localeCompare(b.nombre, 'es'));
@@ -212,9 +212,11 @@ const FILTRO = `<script>
 })();
 </script>`;
 
+// Página propia por producto (solo los que tienen foto): la tarjeta lleva ahí; los demás siguen llevando a la tienda
+const PAG_PROD = process.env.PAG_PROD !== '0'; // encendido desde 2026-11-21 (PAG_PROD=0 lo apaga)
 function producto(t, p) {
   const et = p.agotado ? '<span class="et out">Agotado</span>' : p.stock !== undefined ? `<span class="et">${esc(String(Math.floor(num(p.stock))))} disp.</span>` : '';
-  return `<a class="prod${p.agotado ? ' dis' : ''}" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}"><div class="ph">${p.foto ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span>${iniciales(p.nombre)}</span>`}${p.nuevo ? '<span class="nw">Nuevo</span>' : ''}${et}</div>
+  return `<a class="prod${p.agotado ? ' dis' : ''}" ${p.slug ? `href="/tiendas/${esc(t.slug)}/${esc(p.slug)}/"` : `href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}"`}><div class="ph">${p.foto ? `<img src="${esc(p.foto)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span>${iniciales(p.nombre)}</span>`}${p.nuevo ? '<span class="nw">Nuevo</span>' : ''}${et}</div>
 <div class="bd">${p.cat ? `<div class="cat">${esc(p.cat)}</div>` : ''}<div class="nm">${esc(p.nombre)}</div><div class="pr">${p.desde ? '<small>desde </small>' : ''}${esc(t.moneda)}&nbsp;${fmtN(p.precio)}</div>${p.esp ? `<div class="esp">${esc(t.moneda)}&nbsp;${fmtN(p.esp.p)} desde ${p.esp.m} piezas</div>` : ''}</div></a>`;
 }
 
@@ -283,6 +285,8 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
   // Ficha de cada tienda
   T.forEach(t => {
     const g = t.giros[0], gn = GIROS[g], gs = slug(gn), wa = waLink(t.telefono), ps = t.productos.slice(0, MAX_PROD);
+    // Direcciones de los productos con foto: por nombre; si dos se llaman igual, el segundo lleva número
+    if (PAG_PROD) { const usados = new Set(); ps.forEach(p => { if (!p.foto) return; let b = slug(p.nombre) || 'producto', k = b, i = 2; while (usados.has(k)) k = b + '-' + (i++); usados.add(k); p.slug = k; }); }
     const desc = txt(`${t.frase || gn + ' en ' + t.ciudad}. Pide desde tu celular y coordina la entrega directo con el negocio.`, 160);
     const datos = [['Horario', t.horario], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Dirección', t.direccion]].filter(x => x[1]);
     poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, medir: 'tc-t-' + idMedir(t), title: `${t.nombre} · ${gn} en ${t.ciudad}`, desc, img: t.portada,
@@ -298,6 +302,25 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
 <div class="caja-l"><h2>Más en ${esc(t.ciudad)}</h2><a href="/tiendas/${gs}/${esc(t.ciudadSlug)}/">${esc(gn)} en ${esc(t.ciudad)}</a><a href="/tiendas/en/${esc(t.ciudadSlug)}/">Todas las tiendas de ${esc(t.ciudad)}</a></div>
 <p class="hecho">Tienda creada con Gestión de Negocio VM · <a href="${esc(TIENDA_URL)}?src=catrachas">Crea la tuya</a></p></section>` }));
     urls.push(`/tiendas/${t.slug}/`);
+    ps.filter(p => p.slug).forEach(p => {
+      const ruta = `/tiendas/${t.slug}/${p.slug}/`, precio = `${t.moneda} ${fmtN(p.precio)}`, donde = t.ciudad !== 'Honduras' ? t.ciudad : 'Honduras';
+      const pd = txt(`${p.nombre} en ${donde}: ${p.desde ? 'desde ' : ''}${precio} en ${t.nombre}. ${p.desc || 'Pídelo desde tu celular y coordina la entrega directo con el negocio.'}`, 160);
+      const otros = ps.filter(x => x !== p && (!p.cat || x.cat === p.cat)).concat(ps.filter(x => x !== p && p.cat && x.cat !== p.cat)).slice(0, 6);
+      const filas = [['Precio', (p.desde ? 'desde ' : '') + precio], ...(p.esp ? [['Por cantidad', `${t.moneda} ${fmtN(p.esp.p)} desde ${p.esp.m} piezas`]] : []), ['Disponibilidad', p.agotado ? 'Agotado' : 'Disponible'], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Lo vende', t.nombre + ' · ' + donde]].filter(x => x[1]);
+      poner(ruta, pagina({ ruta, medir: 'tc-p-' + idMedir(t), title: `${p.nombre} en ${donde} · ${t.nombre}`, desc: pd, img: p.foto,
+        ld: { '@context': 'https://schema.org', '@type': 'Product', name: p.nombre, ...(p.desc ? { description: p.desc } : {}), ...(/^https:/.test(p.foto) ? { image: p.foto } : {}), ...(p.cat ? { category: p.cat } : {}),
+          offers: { '@type': 'Offer', price: p.precio, priceCurrency: 'HNL', availability: 'https://schema.org/' + (p.agotado ? 'OutOfStock' : 'InStock'), url: SITIO + ruta, seller: { '@type': 'Store', name: t.nombre, url: SITIO + '/tiendas/' + t.slug + '/' } } },
+        cuerpo: `<section class="cont ficha pprod">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.nombre, `/tiendas/${t.slug}/`], [p.nombre]])}
+<div class="pp"><div class="pp-f"><img src="${esc(p.foto)}" alt="${esc(p.nombre)}" fetchpriority="high">${p.nuevo ? '<span class="nw">Nuevo</span>' : ''}</div>
+<div class="pp-d">${p.cat ? `<div class="cat">${esc(p.cat)}</div>` : ''}<h1>${esc(p.nombre)}</h1><p class="pp-pr">${p.desde ? '<small>desde </small>' : ''}${esc(t.moneda)}&nbsp;${fmtN(p.precio)}</p>
+<p class="meta">Lo vende <a href="/tiendas/${esc(t.slug)}/">${esc(t.nombre)}</a> · ${esc(gn)} en ${esc(donde)}</p>
+${p.desc ? `<p class="sobre">${esc(p.desc)}</p>` : ''}
+<div class="acciones"><a class="btn grande" href="${esc(linkTienda(t))}" data-ir="${idMedir(t)}">${p.agotado ? 'Ver la tienda' : 'Pedir en la tienda'}</a>${wa ? `<a class="btn linea" href="${esc(wa)}" rel="nofollow noopener">Preguntar por WhatsApp</a>` : ''}</div></div></div>
+<dl class="datos">${filas.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+${otros.length ? `<h2 class="sub">Más de ${esc(t.nombre)}</h2><div class="prods">${otros.map(x => producto(t, x)).join('\n')}</div><p class="mas"><a class="btn linea" href="/tiendas/${esc(t.slug)}/">Ver toda la tienda</a></p>` : ''}
+<p class="hecho">Tienda creada con Gestión de Negocio VM · <a href="${esc(TIENDA_URL)}?src=catrachas">Crea la tuya</a></p></section>` }));
+      urls.push(ruta);
+    });
   });
 
   archivos['/tiendas/estilo.css'] = CSS;
