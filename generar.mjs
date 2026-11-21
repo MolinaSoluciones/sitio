@@ -18,6 +18,7 @@ const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
 // Llave pública (la misma que ya va en la app): no da acceso a ninguna tabla, solo a la función del directorio
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo';
 const SALIDA = process.env.SALIDA || 'publico';
+const INDEXNOW = '21d0949c7c846b177b3718de1a323f00'; // llave pública de IndexNow: el sitio la publica en /<llave>.txt y avisa a Bing cuando cambia una página
 const MAX_PROD = 60;
 const WA = 'https://wa.me/50433130265'; // el mismo contacto que muestra la app
 // Página de inicio: qué resuelve el programa para cada tipo de negocio
@@ -190,7 +191,7 @@ const iniciales = s => esc(txt(s, 40).split(' ').slice(0, 2).map(w => w[0] || ''
 function tarjeta(t) {
   const g = GIROS[t.giros[0]];
   return `<article class="tarjeta" data-q="${esc((t.nombre + ' ' + t.giros.map(x => GIROS[x]).join(' ') + ' ' + t.giroN + ' ' + t.ciudad + ' ' + t.frase).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))}" data-c="${esc(t.ciudadSlug)}">
-<a class="portada" href="/tiendas/${esc(t.slug)}/" tabindex="-1" aria-hidden="true">${t.portada ? `<img src="${esc(t.portadaMini || t.portada)}" alt="" loading="lazy">` : `<span>${iniciales(t.nombre)}</span>`}</a>
+<a class="portada" href="/tiendas/${esc(t.slug)}/" tabindex="-1" aria-hidden="true">${t.portada ? `<img src="${esc(t.portadaMini || t.portada)}" alt="${esc(t.nombre)}" loading="lazy">` : `<span>${iniciales(t.nombre)}</span>`}</a>
 <div class="cuerpo"><h3><a href="/tiendas/${esc(t.slug)}/">${esc(t.nombre)}</a></h3><p class="meta">${esc(g)} · ${esc(t.ciudad)}</p>${t.frase ? `<p class="frase">${esc(t.frase)}</p>` : ''}<a class="btn" href="/tiendas/${esc(t.slug)}/">Ver tienda</a></div>
 </article>`;
 }
@@ -228,7 +229,7 @@ function generar(T) {
   const buscador = `<div class="buscar"><label class="caja"><span class="oculto">Buscar tienda</span><input id="buscar" type="search" placeholder="Busca una tienda o un tipo de negocio" autocomplete="off"></label>${selCiudad}</div>`;
   const nCiud = new Set(T.map(t => t.ciudadSlug)).size;
   // Portada ilustrada (marco con centro blanco): título y buscador dentro; en celular solo el nombre dentro del marco
-  const portada = (h1, p, extra) => `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}">${WEBP_P.has(n) ? `<img src="/portadas/${n}-1600.webp" srcset="/portadas/${n}-900.webp 900w, /portadas/${n}-1600.webp 1600w" sizes="(max-width:1190px) 100vw, 1160px" width="1600" height="900" alt=""${i ? ' loading="lazy"' : ' fetchpriority="high"'}>` : `<img src="/portadas/${n}.jpg" width="1600" height="900" alt=""${i ? ' loading="lazy"' : ' fetchpriority="high"'}>`}</div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>${h1}</h1><p>${p}</p>${extra}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
+  const portada = (h1, p, extra) => `<section class="hero portada"><div class="marco"><div class="portadas" id="portadas" aria-hidden="true">${PORTADAS.map((n, i) => `<div class="pt${i ? '' : ' on'}">${WEBP_P.has(n) ? `<img src="/portadas/${n}-1600.webp" srcset="/portadas/${n}-900.webp 900w, /portadas/${n}-1600.webp 1600w" sizes="(max-width:1190px) 100vw, 1160px" width="1600" height="900" alt="Ilustración de comercios y tradiciones de Honduras"${i ? ' loading="lazy"' : ' fetchpriority="high"'}>` : `<img src="/portadas/${n}.jpg" width="1600" height="900" alt="Ilustración de comercios y tradiciones de Honduras"${i ? ' loading="lazy"' : ' fetchpriority="high"'}>`}</div>`).join('')}</div><div class="hero-t"><span class="ceja">Tiendas <span class="sl">Catrachas</span></span><h1>${h1}</h1><p>${p}</p>${extra}</div><span class="pt-dato">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · ${nCiud} ${nCiud === 1 ? 'ciudad' : 'ciudades'}</span></div>${PORTADAS.length > 1 ? `<div class="pt-dots" id="pt-dots">${PORTADAS.map((n, i) => `<button type="button" class="${i ? '' : 'on'}" aria-label="Ver portada ${i + 1}"></button>`).join('')}</div>` : ''}</section>
 <script>(function () { var s = [].slice.call(document.querySelectorAll('#portadas .pt')), d = [].slice.call(document.querySelectorAll('#pt-dots button')), i = 0, t = 0; if (s.length < 2) return;
   function ir(n) { i = (n + s.length) % s.length; s.forEach(function (e, k) { e.classList.toggle('on', k === i); }); d.forEach(function (e, k) { e.classList.toggle('on', k === i); }); }
   function auto() { clearInterval(t); if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) t = setInterval(function () { ir(i + 1); }, 5000); }
@@ -304,6 +305,7 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
   archivos['/fondo.webp'] = readFileSync(new URL('./fondo.webp', import.meta.url));
   archivos['/fondo.jpg'] = readFileSync(new URL('./fondo.jpg', import.meta.url)); // fondo de dibujos de la cultura hondureña (color reducido)
   archivos['/medir.js'] = readFileSync(new URL('./medir.js', import.meta.url));
+  archivos['/' + INDEXNOW + '.txt'] = INDEXNOW + '\n'; // llave de IndexNow (ver indexnow.mjs)
   archivos['/robots.txt'] = `User-agent: *\nAllow: /\nSitemap: ${SITIO}/sitemap.xml\n`;
   archivos['/CNAME'] = 'molinasoluciones.com\n';
   archivos['/compartir.png'] = readFileSync(new URL('./compartir.png', import.meta.url));

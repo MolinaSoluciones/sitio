@@ -23,7 +23,12 @@ jobs:
         with:
           node-version: 22
       - run: node generar.mjs
+      # Aviso a Bing (IndexNow): se prepara antes de subir y se manda cuando el sitio ya está publicado. Si falla, el sitio se publica igual.
+      - run: node indexnow.mjs preparar
+        continue-on-error: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: publico
       - uses: actions/deploy-pages@v4
+      - run: sleep 45 && node indexnow.mjs enviar
+        continue-on-error: true
