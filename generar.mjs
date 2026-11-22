@@ -590,7 +590,7 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
   urls.push('/guias/');
 
   // Módulo aparte «Para tu negocio»: el programa por tipo de negocio y las guías (las tiendas van siempre primero en el resto del sitio)
-  poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, medir: 'tc-negocio', title: 'Para tu negocio · Programa de ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
+  poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, medir: 'tc-negocio', title: 'Para tu negocio · Ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
     cuerpo: `<section class="hero"><h1>Un programa hecho para tu tipo de negocio</h1><p>Ventas, inventario, caja y cuentas por cobrar desde tu celular, con tu tienda en línea para aparecer en Tiendas Catrachas.</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
 <section class="cont"><h2 class="tit">¿Qué tipo de negocio tienes?</h2><div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
 <h2 class="tit">Lo que trae para todos</h2><div class="todos">${COMUN.map(([n, d]) => `<div class="pto"><h3>${esc(n)}</h3><p>${esc(d)}</p></div>`).join('')}</div>
