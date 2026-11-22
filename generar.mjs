@@ -246,7 +246,7 @@ function generar(T) {
   // Portada del directorio
   poner('/tiendas/', pagina({ ruta: '/tiendas/', medir: 'tc-dir', title: 'Tiendas Catrachas · Tiendas en línea de Honduras', desc: 'Tiendas en línea de negocios de Honduras: mira su catálogo, compra por internet y haz tu pedido directo con el negocio, a domicilio o para recoger.',
     ld: listaLd('Tiendas Catrachas', T),
-    cuerpo: `${portada('Tiendas en línea de Honduras', 'Negocios catrachos con su tienda online. Mira el catálogo y haz tu pedido directo con el negocio, a domicilio o para recoger.', buscador)}
+    cuerpo: `${portada('Tiendas en línea de Honduras', 'Negocios catrachos con su tienda en línea. Mira el catálogo y haz tu pedido directo con el negocio, a domicilio o para recoger.', buscador)}
 <section class="cont">${chips([['Todos', '/tiendas/', true], ...girosCon.map(g => [GIROS[g], '/tiendas/' + slug(GIROS[g]) + '/'])])}
 <p class="cuenta">${T.length} ${T.length === 1 ? 'tienda' : 'tiendas'} · primero las más visitadas</p>
 ${rejilla(T)}
