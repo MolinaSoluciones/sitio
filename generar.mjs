@@ -589,12 +589,206 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
 <section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Guías']])}<div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div></section>` }));
   urls.push('/guias/');
 
+  // Plantillas gratis para dueños de negocio (archivos de Excel en descargas/, creados con herramientas/plantillas.py).
+  // Igual que las guías: con «borrador: true» no se publica; solo se ve en local con PREVIA=1. Sin «a» (archivo) es solo una idea en la lista de la vista previa.
+  const PLANTILLAS = [
+    { s: 'plantilla-de-inventario-en-excel', n: 'Inventario', t: 'Plantilla de inventario en Excel gratis', a: 'plantilla-de-inventario.xlsx',
+      d: 'Descarga gratis una plantilla de inventario en Excel: anotas compras y ventas, y la lista de productos con su existencia se llena sola. Sirve en el celular.',
+      i: 'Solo anotas tus compras y tus ventas, una al lado de la otra. La hoja de productos se llena sola: cada producto una vez, con su existencia, su costo y un aviso de lo que hay que comprar.',
+      inc: ['Hoja «Compras y ventas»: las dos tablas lado a lado, con espacio para 1,000 compras y 1,000 ventas', 'Hoja «Productos» que se llena sola: cada producto una vez, sin escribirlo dos veces', 'Existencia, costo y precio promedio, y valor de tu inventario calculados solos; las fórmulas vienen bloqueadas para que no se borren', 'Aviso «Comprar» o «Agotado» con el número de unidades que tú elijas'],
+      // hojas: vista de cada hoja en la página. calc: columnas rosadas (se calculan solas). cel: columnas que se ven en el celular
+      hojas: [{ n: 'Compras y ventas', d: 'Aquí anotas todo.', lados: [
+          { n: 'Compras', cab: ['Fecha', 'Producto', 'Cantidad', 'Total'], fil: [['01/11', 'Arroz (libra)', '40', '480.00'], ['03/11', 'Arroz (libra)', '50', '600.00'], ['03/11', 'Frijoles rojos (libra)', '20', '400.00']], calc: [3], cel: [0, 1, 2, 3] },
+          { n: 'Ventas', cab: ['Fecha', 'Producto', 'Cantidad', 'Total'], fil: [['04/11', 'Arroz (libra)', '30', '450.00'], ['04/11', 'Frijoles rojos (libra)', '20', '500.00'], ['15/11', 'Arroz (libra)', '32', '480.00']], calc: [3], cel: [0, 1, 2, 3] }] },
+        { n: 'Productos', d: 'Se llena sola.', cab: ['Producto', 'Comprado', 'Vendido', 'Existencia', 'Costo prom.', 'Precio prom.', 'Valor', 'Estado'],
+          fil: [['Arroz (libra)', '90', '62', '28', '12.00', '15.00', '336.00', 'Bien'], ['Frijoles rojos (libra)', '50', '44', '6', '20.00', '25.00', '120.00', 'Comprar'], ['Aceite 750 ml', '24', '24', '0', '48.00', '58.00', '0.00', 'Agotado'], ['Refresco 3 litros', '42', '20', '22', '42.00', '50.00', '924.00', 'Bien']],
+          calc: [0, 1, 2, 3, 4, 5, 6, 7], cel: [0, 2, 3, 7] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Empieza con lo que ya tienes', 'En «Compras y ventas», anota como compra del primer día lo que hay hoy en tu estante, con lo que te costó.'],
+        ['Anota cada compra y cada venta', 'Compras a la izquierda, ventas a la derecha. El mismo producto se repite las veces que quieras; después de la primera vez lo eliges de la lista.'],
+        ['Mira la hoja «Productos»', 'Se llena sola: cada producto una vez, con lo comprado, lo vendido, cuánto te queda y cuánto vale tu inventario.'],
+        ['Elige cuándo te avisa', 'Arriba de «Productos» escribes con cuántas unidades quieres el aviso. Al llegar ahí, el estado dice «Comprar».']],
+      g: 'como-llevar-el-inventario-de-tu-negocio',
+      vm: 'La plantilla funciona, pero cada compra y cada venta la anotas dos veces: al hacerla y en la hoja. En el programa cada venta descuenta la existencia y cada compra la suma, le pones a cada producto su mínimo y te avisa lo que está por agotarse.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Puedo usarla en el celular?', 'Sí. Ábrela con Google Sheets o con Excel para celular; las fórmulas funcionan igual.'],
+        ['¿Sirve para cualquier tipo de negocio?', 'Sí: pulperías, tiendas, boutiques, ferreterías o cualquier negocio que venda productos por unidad, libra o caja.'],
+        ['¿Cuántos productos caben?', 'Trae espacio para 200 productos distintos y 1,000 filas de compras y de ventas. Si tienes más, o vendes por tallas y colores, conviene pasar a un programa que lleve la existencia solo.']] },
+    { s: 'plantilla-de-cierre-de-caja-en-excel', n: 'Cierre de caja diario', t: 'Plantilla de cierre de caja diario en Excel gratis', a: 'plantilla-cierre-de-caja.xlsx',
+      d: 'Descarga gratis una plantilla de cierre de caja en Excel: anotas apertura, ventas, abonos y gastos, y te dice cuánto debería haber y si la caja cuadra, sobra o falta.',
+      i: 'Una fila por día. Escribes con cuánto abriste, lo que entró y lo que salió, y lo que contaste al cerrar. La hoja te dice cuánto debería haber y si la caja cuadra, sobra o falta.',
+      inc: ['Cuánto debería haber: apertura, más ventas en efectivo y abonos, menos gastos, pagos y retiros', 'Diferencia y resultado del día: cuadra, sobrante o faltante', 'Ventas por transferencia o tarjeta aparte, y el total vendido del día', 'Arriba, lo que ha faltado y sobrado en total, y los días con faltante'],
+      hojas: [{ n: 'Cierre de caja', d: 'Una fila por día. Entradas: ventas en efectivo y abonos; salidas: gastos y retiros.', cab: ['Fecha', 'Apertura', 'Entradas', 'Salidas', 'Debería haber', 'Se contó', 'Diferencia', 'Resultado'],
+        fil: [['17/11', '300.00', '2,650.00', '680.00', '2,270.00', '2,290.00', '+20.00', 'Sobrante'], ['18/11', '300.00', '1,980.00', '120.00', '2,160.00', '2,160.00', '0.00', 'Cuadra'], ['19/11', '300.00', '2,950.00', '1,200.00', '2,050.00', '2,000.00', '−50.00', 'Faltante']],
+        calc: [4, 6, 7], cel: [0, 4, 5, 7] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Anota la apertura', 'Cada día, una fila nueva con la fecha y el efectivo con que abriste la caja.'],
+        ['Anota lo que entró y lo que salió', 'Ventas en efectivo y abonos; gastos, pagos a proveedores y retiros. Las ventas por transferencia o tarjeta van en su propia columna.'],
+        ['Cuenta y escribe lo que hay', 'En «Se contó». La hoja te dice la diferencia y si la caja cuadra, sobra o falta.'],
+        ['Anota el motivo', 'Si sobra o falta, escribe por qué en «Nota». Arriba ves si el faltante se repite.']],
+      g: 'como-hacer-el-cierre-de-caja', vmA: 'La plantilla sirve, pero cada venta y cada gasto los sumas tú al final del día.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Las ventas con tarjeta o transferencia van en la caja?', 'No. Ese dinero no está en la gaveta. La plantilla las lleva en una columna aparte para que el total vendido del día salga completo sin descuadrar la caja.'],
+        ['¿Qué hago si la caja no cuadra?', 'Busca primero un gasto, retiro o venta sin anotar. Si no aparece, deja escrita la diferencia con su motivo: lo importante es ver si se repite.'],
+        ['¿Cuántos días caben?', 'Trae espacio para un año completo, una fila por día.']] },
+    { s: 'plantilla-de-arqueo-de-caja-en-excel', n: 'Arqueo de caja', t: 'Plantilla de arqueo de caja en Excel gratis', a: 'plantilla-arqueo-de-caja.xlsx',
+      d: 'Descarga gratis una plantilla de arqueo de caja en Excel: abonos de clientes, cobros con tarjeta y transferencia, y conteo de billetes y monedas de lempiras, lista para imprimir.',
+      i: 'Una hoja para contar la caja en cualquier momento: escribes lo que debería haber, los abonos de cada cliente y lo cobrado con tarjeta o transferencia, cuentas billetes y monedas de lempiras, y te dice si cuadra, sobra o falta. Cabe en una página para imprimir y firmar.',
+      inc: ['Lo que debería haber en la gaveta: apertura, ventas en efectivo y abonos, menos gastos, pagos y retiros', 'Detalle de los clientes que abonaron, con cuánto y cómo pagó cada uno', 'Cobros que no están en la gaveta: tarjeta, transferencias y otros', 'Conteo por billete y moneda de lempiras, resultado y espacio para las firmas'],
+      hojas: [{ n: 'Arqueo', t: 'Lo que debería haber y los abonos', lados: [
+          { n: 'Lo que debería haber', cab: ['Concepto', 'Monto'], fil: [['Apertura de caja', '500.00'], ['Ventas en efectivo', '3,200.00'], ['Abonos en efectivo', '400.00'], ['Gastos y pagos', '−1,350.00'], ['Debería haber', '2,750.00']], calc: [], fc: [2, 4], cel: [0, 1] },
+          { n: 'Abonos de clientes', cab: ['Cliente', 'Monto', 'Cómo pagó'], fil: [['María López', '250.00', 'Efectivo'], ['Carlos Mejía', '150.00', 'Efectivo'], ['Ana Reyes', '300.00', 'Transferencia'], ['Total abonado', '700.00', '']], calc: [], fc: [3], cel: [0, 1, 2] }] },
+        { n: 'Arqueo', t: 'Cobros fuera de la gaveta y conteo', lados: [
+          { n: 'No están en la gaveta', cab: ['Concepto', 'Monto'], fil: [['Ventas con tarjeta', '1,250.00'], ['Ventas por transferencia', '800.00'], ['Otros', '0.00'], ['Abonos por transferencia', '300.00'], ['Total fuera de la gaveta', '2,350.00']], calc: [], fc: [3, 4], cel: [0, 1] },
+          { n: 'Conteo del efectivo', cab: ['Billete o moneda', 'Cantidad', 'Total'], fil: [['Billete de L 500', '3', '1,500.00'], ['Billete de L 200', '3', '600.00'], ['… y el resto', '', ''], ['Total contado', '24', '2,700.00'], ['Faltante', '', '−50.00']], calc: [2], fc: [3, 4], cel: [0, 1, 2] }] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Escribe lo que debería haber', 'Con cuánto se abrió, las ventas en efectivo y lo que salió de la caja.'],
+        ['Anota los abonos y los otros cobros', 'Cada cliente que abonó y cómo pagó; los abonos en efectivo pasan solos a la caja. Aparte, lo cobrado con tarjeta, transferencia u otros.'],
+        ['Cuenta billetes y monedas', 'Escribe cuántos hay de cada uno. La hoja suma el total.'],
+        ['Mira el resultado', 'Te dice si la caja cuadra, sobra o falta, y cuánto.'],
+        ['Imprime y firma', 'Firman quien estaba en caja y quien hizo el arqueo. Para el siguiente, borra las cantidades o copia la hoja.']],
+      g: 'como-hacer-un-arqueo-de-caja', vmA: 'La plantilla sirve, pero lo que debería haber lo sumas tú.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Qué diferencia hay entre arqueo y cierre de caja?', 'El cierre se hace al terminar el día. El arqueo es un conteo que se puede hacer en cualquier momento, por ejemplo al cambiar de cajero o sin avisar.'],
+        ['¿Puedo guardar varios arqueos?', 'Sí. Copia la hoja para cada arqueo: clic derecho en la pestaña, Mover o copiar, Crear una copia.'],
+        ['¿Trae las monedas de Honduras?', 'Sí: billetes de L 500, 200, 100, 50, 20, 10, 5, 2 y 1, y monedas de 50, 20, 10 y 5 centavos.']] },
+    { s: 'plantilla-de-cuentas-por-cobrar-en-excel', n: 'Ventas al crédito', t: 'Plantilla de ventas al crédito y cuentas por cobrar en Excel gratis', a: 'plantilla-ventas-al-credito.xlsx',
+      d: 'Descarga gratis una plantilla de cuentas por cobrar en Excel: ventas al crédito y abonos por cliente, con su saldo, su límite, sus días sin abonar y su estado de cuenta.',
+      i: 'Anotas lo que vendes al crédito y los abonos, uno al lado del otro. La hoja de clientes se llena sola con el saldo, el límite y lo disponible de cada uno, y el estado de cuenta te muestra todo lo de un cliente para mandárselo.',
+      inc: ['Hoja «Créditos y abonos»: ventas al crédito y abonos lado a lado, 1,000 filas de cada uno', 'Hoja «Clientes» que se llena sola: saldo, límite, disponible, último abono y días sin abonar', 'Límite propio para cada cliente, o uno general para todos', 'Estado de cuenta por cliente: sus compras al crédito y sus abonos, listo para imprimir o guardar en PDF'],
+      hojas: [{ n: 'Créditos y abonos', d: 'Aquí anotas todo.', lados: [
+          { n: 'Ventas al crédito', cab: ['Fecha', 'Cliente', 'Monto'], fil: [['01/11', 'María López', '1,200.00'], ['10/11', 'Carlos Mejía', '450.00'], ['12/11', 'María López', '600.00']], calc: [], cel: [0, 1, 2] },
+          { n: 'Abonos', cab: ['Fecha', 'Cliente', 'Monto'], fil: [['05/11', 'José Martínez', '650.00'], ['08/11', 'María López', '400.00'], ['15/11', 'María López', '300.00']], calc: [], cel: [0, 1, 2] }] },
+        { n: 'Clientes', d: 'Se llena sola.', cab: ['Cliente', 'Saldo', 'Límite', 'Disponible', 'Días sin abonar', 'Estado'],
+          fil: [['María López', '1,100.00', '2,000.00', '900.00', '7', 'Al día'], ['Ana Reyes', '1,800.00', '1,500.00', '0.00', '33', 'Pasó el límite'], ['José Martínez', '0.00', '1,500.00', '1,500.00', '', 'Pagado'], ['Carlos Mejía', '450.00', '1,500.00', '1,050.00', '12', 'Al día']],
+          calc: [0, 1, 2, 3, 4, 5], cel: [0, 1, 3, 5] },
+        { n: 'Estado de cuenta', d: 'Eliges el cliente y sale todo lo suyo.', lados: [
+          { n: 'María López · compras al crédito', cab: ['Fecha', 'Qué llevó', 'Monto'], fil: [['01/11', 'Ropa y zapatos', '1,200.00'], ['12/11', 'Blusa y cartera', '600.00'], ['Total', '', '1,800.00']], calc: [0, 1, 2], cel: [0, 1, 2] },
+          { n: 'María López · abonos', cab: ['Fecha', 'Monto', 'Forma de pago'], fil: [['08/11', '400.00', 'Efectivo'], ['15/11', '300.00', 'Transferencia'], ['Saldo que debe', '1,100.00', '']], calc: [0, 1, 2], cel: [0, 1, 2] }] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Anota cada venta al crédito', 'En «Créditos y abonos», a la izquierda: fecha, cliente, qué llevó y monto.'],
+        ['Anota cada abono', 'A la derecha: fecha, cliente (lo eliges de la lista), monto y forma de pago.'],
+        ['Ponle a cada cliente su límite', 'En «Clientes» está el límite general; si un cliente tiene otro, escríbelo en la tabla «Límite propio».'],
+        ['Saca su estado de cuenta', 'En «Estado de cuenta» eliges el cliente y sale todo lo suyo con su saldo, listo para mandárselo.']],
+      g: 'como-controlar-las-ventas-al-credito', vmA: 'La plantilla sirve, pero el recordatorio a cada cliente lo mandas tú a mano.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Tengo que escribir la lista de clientes?', 'No. Cada cliente aparece solo la primera vez que le anotas una venta al crédito o un abono.'],
+        ['¿Qué pasa si escribo un nombre distinto?', '«María López» y «Maria Lopez» salen como dos clientes. Después de la primera vez, elige el nombre de la lista.'],
+        ['¿Puedo darle a cada cliente un límite distinto?', 'Sí. Hay un límite general y una tabla para escribir el límite propio de los clientes que lo necesiten.'],
+        ['¿Cuántos clientes caben?', 'Trae espacio para 300 clientes distintos y 1,000 filas de ventas al crédito y de abonos.']] },
+    { s: 'calculadora-de-precio-de-venta-en-excel', n: 'Calculadora de precio de venta', t: 'Calculadora de precio de venta en Excel gratis', a: 'calculadora-precio-de-venta.xlsx',
+      d: 'Descarga gratis una calculadora de precio de venta en Excel: escribes el costo y el margen que quieres, y te da el precio redondeado y tu ganancia por unidad.',
+      i: 'Escribes lo que te cuesta cada producto, con el flete y el empaque, y el margen que quieres ganar. La hoja calcula el precio con la fórmula costo ÷ (1 − margen), lo redondea a un precio fácil de cobrar y te dice cuánto ganas.',
+      inc: ['Costo completo: lo que pagaste más flete, empaque y otros por unidad', 'Un margen para todos los productos, o uno distinto para el que lo necesite', 'Precio redondeado hacia arriba a L 1, L 5 o lo que elijas', 'Ganancia por unidad de cada producto'],
+      hojas: [{ n: 'Precios', d: 'Margen general: 40 %.', cab: ['Producto', 'Costo', 'Flete y empaque', 'Margen', 'Precio sugerido', 'Precio para cobrar', 'Ganancia'],
+        fil: [['Blusa', '55.00', '5.00', '40%', '100.00', '100.00', '40.00'], ['Pantalón de mezclilla', '250.00', '10.00', '40%', '433.33', '435.00', '175.00'], ['Refresco 3 litros', '42.00', '', '15%', '49.41', '50.00', '8.00']],
+        calc: [4, 5, 6], cel: [0, 1, 5, 6] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Escribe el costo completo', 'Lo que pagaste por cada unidad y, aparte, el flete, el empaque o la bolsa que le toca a cada una.'],
+        ['Elige tu margen', 'Arriba, el margen para todos. Si un producto necesita otro, escríbelo en su fila.'],
+        ['Elige cómo redondear', 'Con 5 el precio queda en múltiplos de L 5; con 1, en lempiras enteros; con 0 no se redondea.'],
+        ['Lee tu precio', '«Precio para cobrar» es el precio final y «Ganancia» lo que te queda de cada unidad.']],
+      g: 'como-calcular-el-precio-de-venta', vmA: 'La calculadora te da el precio, pero no te dice cuánto ganaste al final del día.',
+      fq: [['¿La calculadora es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Qué fórmula usa?', 'Precio de venta = costo ÷ (1 − margen). Con un margen de 40 %, divide el costo entre 0.60: un producto que cuesta L 60 se vende en L 100.'],
+        ['¿Margen y ganancia sobre el costo son lo mismo?', 'No. Ganar 40 % sobre el costo (L 60 + 40 % = L 84) deja menos que un margen de 40 % del precio (L 100). La calculadora usa el margen sobre el precio.'],
+        ['¿Incluye impuestos?', 'No. Calcula el precio a partir de tu costo y tu margen; si tu negocio cobra impuestos, súmalos aparte según tu caso.']] },
+    { s: 'plantilla-de-control-de-gastos-en-excel', n: 'Control de gastos del mes', t: 'Plantilla de control de gastos en Excel gratis', a: 'plantilla-control-de-gastos.xlsx',
+      d: 'Descarga gratis una plantilla de control de gastos en Excel para tu negocio: anotas cada gasto y te da el total del mes por tipo de gasto, cuánto es por día y el resumen del año.',
+      i: 'Anotas cada gasto con su fecha y su tipo. El resumen te dice cuánto gastaste en el mes en cada cosa, qué parte del total es, cuánto te toca ganar por día solo para cubrirlos y cómo va cada mes del año.',
+      inc: ['Hoja «Gastos»: fecha, tipo de gasto de una lista, detalle, monto y forma de pago', 'Resumen del mes por tipo de gasto, con su parte del total', 'Cuánto es por día: lo que tu negocio debe ganar solo para cubrir gastos', 'Total de cada mes del año, y tipos de gasto que puedes cambiar'],
+      hojas: [{ n: 'Resumen', d: 'Noviembre de 2026.', cab: ['Tipo de gasto', 'Gasto del mes', 'Parte del total'],
+        fil: [['Alquiler del local', '5,000.00', '52%'], ['Transporte y fletes', '1,800.00', '19%'], ['Luz y agua', '1,500.00', '16%'], ['Internet y recargas', '700.00', '7%'], ['Bolsas y empaques', '600.00', '6%'], ['Total del mes', '9,600.00', '100%'], ['Por día (÷ 30)', '320.00', '']],
+        calc: [1, 2], fc: [5, 6], cel: [0, 1, 2] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Anota cada gasto el mismo día', 'En la hoja «Gastos»: fecha, tipo de gasto (de la lista), detalle, monto y cómo pagaste.'],
+        ['No mezcles la casa con el negocio', 'Lo de la casa no es gasto del negocio. Comprar mercadería para vender tampoco: es inventario.'],
+        ['Mira el resumen', 'Elige el mes y el año, y ves cuánto gastaste en cada cosa y cuánto es por día.'],
+        ['Revisa qué puedes bajar', 'Con los gastos ordenados de mayor a menor, casi siempre aparece uno que se puede reducir.']],
+      g: 'como-llevar-el-control-de-gastos-de-un-negocio', vmA: 'La plantilla sirve, pero el gasto no se descuenta de tu caja: eso lo cuadras tú.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Puedo cambiar los tipos de gasto?', 'Sí. En el resumen, la columna «Tipo de gasto» se puede editar: renombra o agrega los tuyos y aparecen en la lista.'],
+        ['¿La compra de mercadería es un gasto?', 'No. Lo que compras para vender es inventario que vuelve cuando lo vendes. Gasto es lo que no vuelve: alquiler, luz, fletes, sueldos.'],
+        ['¿Sirve para varios meses?', 'Sí. Trae espacio para 1,000 gastos y el resumen muestra cualquier mes y el total de cada mes del año.']] },
+    { s: 'plantilla-de-pedidos-por-encargo-y-apartados-en-excel', n: 'Pedidos por encargo y apartados', t: 'Plantilla de pedidos por encargo y apartados en Excel gratis', a: 'plantilla-pedidos-y-apartados.xlsx',
+      d: 'Descarga gratis una plantilla en Excel para pedidos por encargo y apartados: cliente, anticipo, saldo, estado del pedido y aviso cuando llega o pasa la fecha para retirar.',
+      i: 'Una fila por pedido: qué pidió el cliente, cuánto dejó de anticipo y cuánto le falta. Cambias el estado cuando avanza y la hoja te avisa cuando hay que escribirle al cliente o cuando pasó la fecha para retirar.',
+      inc: ['Cliente, teléfono y qué pidió con talla o color', 'Precio, anticipo y abonos, y el saldo calculado solo', 'Estado de cada pedido: Pedido, En camino, Llegó, Entregado', 'Avisos: «Avisar al cliente», «Pasó la fecha» y «Entregado con saldo»'],
+      hojas: [{ n: 'Pedidos', d: 'Una fila por pedido.', cab: ['Cliente', 'Qué pidió', 'Precio', 'Pagado', 'Saldo', 'Estado', 'Aviso'],
+        fil: [['Sofía Ramos', 'Vestido azul, talla M', '800.00', '400.00', '400.00', 'En camino', ''], ['Luis Castro', 'Zapatos negros, talla 41', '1,200.00', '600.00', '600.00', 'Llegó', 'Avisar al cliente'], ['Marco Flores', 'Camisa blanca, talla L', '350.00', '350.00', '0.00', 'Entregado', 'Completo']],
+        calc: [4, 6], cel: [0, 4, 5, 6] }],
+      p: [['Descarga y abre el archivo', 'En computadora se abre con Excel. En el celular, con Google Sheets o Excel, que son gratis.'],
+        ['Anota el pedido completo', 'Fecha, cliente, teléfono y qué pidió con talla o color.'],
+        ['Escribe el precio y el anticipo', 'Si después da más abonos, súmalos en «Pagado». El saldo se calcula solo.'],
+        ['Cambia el estado cuando avance', 'Pedido, En camino, Llegó o Entregado. Cuando llega, el aviso te recuerda escribirle al cliente.'],
+        ['Pon la fecha límite para retirar', 'Si pasa y no lo retiran, el aviso dice «Pasó la fecha».']],
+      g: 'como-manejar-pedidos-por-encargo-y-apartados', vmA: 'La plantilla sirve, pero al entregar el pedido la venta la anotas aparte.',
+      fq: [['¿La plantilla es gratis?', 'Sí. Se descarga sin registrarte y la puedes usar y copiar las veces que quieras.'],
+        ['¿Sirve para apartados?', 'Sí. Un apartado es un pedido con anticipo: anota el producto, lo que dejó y la fecha límite para retirarlo.'],
+        ['¿Qué pasa con el anticipo si no retiran el pedido?', 'Depende de lo que acuerdes con tu cliente. Déjalo claro desde el principio y escríbelo en la nota del pedido.'],
+        ['¿Cuántos pedidos caben?', 'Trae espacio para 500 pedidos.']] },
+    { s: 'plantilla-completa-para-tu-negocio', n: 'Plantilla completa para tu negocio', t: 'Plantilla completa de Excel para tu negocio: ventas, inventario, caja y créditos', a: 'plantilla-completa-negocio.xlsx', pago: true,
+      d: 'Una sola plantilla de Excel con todo conectado: ventas, compras, inventario, caja diaria, ventas al crédito, gastos y el resumen del mes con tu ganancia. Es de pago.',
+      i: 'Todas las plantillas en un solo archivo, conectadas entre sí: cada venta descuenta tu inventario, entra a tu caja o a la cuenta del cliente y calcula su ganancia. Al final del mes ves cuánto vendiste, cuánto ganaste y cuánto te deben.',
+      inc: ['Ventas que descuentan el inventario, entran a la caja o a la cuenta del cliente y calculan su ganancia', 'Compras, abonos y gastos que se reflejan solos en el inventario, los clientes y la caja', 'Caja diaria que sabe cuánto debería haber sin sumar a mano', 'Resumen del mes: ventas, ganancia, gastos, lo que te deben y lo que hay que comprar'],
+      hojas: [{ n: 'Resumen', d: 'Noviembre de 2026 (datos de ejemplo de una boutique).', lados: [
+          { n: 'El mes', cab: ['Concepto', 'Monto'], fil: [['Ventas', '13,115.00'], ['Costo de lo vendido', '7,860.00'], ['Ganancia en ventas', '5,255.00'], ['Gastos', '4,400.00'], ['Ganancia del mes', '855.00']], calc: [0, 1], cel: [0, 1] },
+          { n: 'Hoy en tu negocio', cab: ['Concepto', 'Dato'], fil: [['Te deben', '1,450.00'], ['Valor del inventario', '6,660.00'], ['Productos por comprar', '1'], ['Días con faltante en caja', '1']], calc: [0, 1], cel: [0, 1] }] },
+        { n: 'Ventas', d: 'Lo que anotas cada día.', cab: ['Fecha', 'Producto', 'Cantidad', 'Total', 'Forma de pago', 'Cliente', 'Ganancia'],
+          fil: [['03/11', 'Blusa', '4', '400.00', 'Efectivo', '', '160.00'], ['05/11', 'Zapatos de mujer', '1', '750.00', 'Crédito', 'María López', '300.00'], ['08/11', 'Cartera', '2', '1,000.00', 'Transferencia', '', '400.00']],
+          calc: [3, 6], cel: [1, 3, 4, 6] }],
+      p: [['Cómprala por WhatsApp', 'Escríbenos y te damos la contraseña para abrir el archivo.'],
+        ['Descarga el archivo y ábrelo con Excel', 'En computadora o en el celular con la app de Excel. Te pide la contraseña la primera vez que lo abres.'],
+        ['Empieza con lo que ya tienes', 'En «Compras», anota tu mercadería de hoy como «Inventario inicial».'],
+        ['Anota ventas, compras, abonos y gastos', 'Solo en las celdas amarillas. Productos, clientes, estado de cuenta y resumen se llenan solos.'],
+        ['Cierra la caja y mira el resumen', 'La caja te dice cuánto debería haber; el resumen, cuánto ganaste en el mes.']],
+      vm: 'La plantilla completa lleva todo tu negocio en Excel. Si además quieres tienda en línea, recibos y recordatorios por WhatsApp desde el celular, eso lo hace Gestión de Negocio VM.',
+      fq: [['¿Por qué esta plantilla es de pago?', 'Porque une todas las plantillas en un solo archivo, con las hojas conectadas entre sí. Las plantillas sueltas siguen siendo gratis.'],
+        ['¿Cómo la compro?', 'Escríbenos por WhatsApp. Te decimos el precio y la forma de pago, y al pagar te damos la contraseña para abrir el archivo.'],
+        ['¿Puedo verla antes de comprarla?', 'Sí: en esta página ves cómo se ven sus hojas, y las plantillas gratis te muestran cómo funciona cada parte.'],
+        ['¿Se abre en Google Sheets?', 'No. Google Sheets no abre archivos con contraseña. Se abre con Excel en computadora o con la app de Excel en el celular.']] }
+  ];
+  for (let i = PLANTILLAS.length - 1; i >= 0; i--) if ((PLANTILLAS[i].borrador && !PREVIA) || (!PLANTILLAS[i].a && !PREVIA)) PLANTILLAS.splice(i, 1);
+  const PL_LISTAS = PLANTILLAS.filter(x => x.a);
+  const IZQ = ['Producto', 'Cliente', 'Concepto', 'Billete o moneda', 'Tipo de gasto', 'Qué pidió']; // columnas alineadas a la izquierda en «Así se ve»
+  const verHoja = h => `<div class="hoja" tabindex="0" role="region" aria-label="${esc(h.n)}"><table><thead><tr>${h.cab.map((c, j) => `<th class="${[h.cel.includes(j) ? '' : 'm-oc', IZQ.includes(c) ? 'iz' : ''].filter(Boolean).join(' ')}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${h.fil.map((f, fi) => `<tr>${f.map((c, j) => `<td class="${[h.calc.includes(j) || (h.fc || []).includes(fi) ? 'calc' : 'llena', ['Comprar', 'Sobrante', 'Avisar al cliente', 'Atrasado'].includes(c) ? 'am' : ['Agotado', 'Faltante', 'Pasó el límite', 'Pasó la fecha'].includes(c) ? 'ro' : ['Cuadra', 'Pagado', 'Completo'].includes(c) ? 've' : '', h.cel.includes(j) ? '' : 'm-oc', IZQ.includes(h.cab[j]) ? 'iz' : ''].filter(Boolean).join(' ')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const plTarjetas = () => `<div class="negocios">${PLANTILLAS.map(x => x.a ? `<a class="neg${x.pago ? ' pago' : ''}" href="/plantillas/${x.s}/"><span class="tag">${x.pago ? 'Excel · de pago' : 'Excel · gratis'}</span><h3>${esc(x.n)}</h3><p>${esc(x.d)}</p></a>` : `<div class="neg prox"><span class="tag">En preparación</span><h3>${esc(x.n)}</h3><p>${esc(x.d)}</p></div>`).join('')}</div>`;
+  PL_LISTAS.forEach((x, k) => {
+    const ruta = `/plantillas/${x.s}/`, baja = `/descargas/${x.a}`, g = GUIAS.find(y => y.s === x.g);
+    archivos[baja] = readFileSync(new URL('./descargas/' + x.a, import.meta.url));
+    const boton = x.pago
+      ? `<div class="precio"><b>Plantilla de pago</b><span>El archivo pide contraseña para abrirse. Escríbenos por WhatsApp: te decimos el precio y, al pagar, te damos la contraseña.</span></div><p class="bajar"><a class="btn grande oro" href="${WA}?text=${encodeURIComponent('Hola, quiero comprar la Plantilla completa para mi negocio.')}" rel="noopener" data-bajar="${esc(slug(x.n))}-wa">Comprar la contraseña por WhatsApp</a><a class="btn linea" href="${baja}" download data-bajar="${esc(slug(x.n))}">Descargar el archivo (pide contraseña)</a><small>Se abre con Excel en computadora o en la app de Excel del celular. Google Sheets no abre archivos con contraseña.</small></p>`
+      : `<p class="bajar"><a class="btn grande" href="${baja}" download data-bajar="${esc(slug(x.n))}">Descargar la plantilla (Excel)</a><small>Gratis · sin registrarte · sirve en Excel y Google Sheets</small></p>`;
+    poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-plant-' + (k + 1), title: `${x.t} · Molina`, desc: x.d,
+      ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: x.t, description: x.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales', logo: { '@type': 'ImageObject', url: SITIO + '/icono-512.png' } }, mainEntityOfPage: SITIO + ruta }, faqLd(x.fq)],
+      cuerpo: `<section class="hero"><h1>${esc(x.t)}</h1><p>${esc(x.d)}</p></section>
+<section class="cont guia">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Plantillas', '/plantillas/'], [x.n]])}<p class="intro">${esc(x.i)}</p>
+${boton}
+<h2 class="tit">Así se ve</h2>${x.hojas.map((h, k) => `<h3 class="hoja-n"><span>${k + 1}</span>${h.t ? esc(h.t) : `Hoja «${esc(h.n)}»`}${h.d ? ` <small>${esc(h.d)}</small>` : ''}</h3>${h.lados ? `<div class="lados">${h.lados.map(l => `<div><p class="lado-n">${esc(l.n)}</p>${verHoja(l)}</div>`).join('')}</div>` : verHoja(h)}`).join('')}<p class="nota-h"><span class="mu llena"></span>Amarillas: las llenas tú. <span class="mu calc"></span>Rosadas: se calculan solas y vienen bloqueadas para que no se borren. Los datos son de ejemplo.</p>
+<h2 class="tit">Qué incluye</h2><ul class="errs">${x.inc.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
+<h2 class="tit">Cómo usarla</h2><ol class="pasos">${x.p.map(([n, d]) => `<li><h3>${esc(n)}</h3><p>${esc(d)}</p></li>`).join('')}</ol>
+${g ? `<p class="intro">¿Quieres el método completo? Lee la guía <a href="/guias/${g.s}/">${esc(g.t)}</a>.</p>` : x.pago ? `<p class="intro">¿Prefieres empezar con una sola parte? Las <a href="/plantillas/">plantillas sueltas</a> son gratis.</p>` : ''}
+<div class="pto" style="margin-top:22px"><h3>${x.pago ? 'Y si quieres llevarlo desde el celular' : 'Y si no quieres llenarla a mano'}</h3><p>${esc(x.vm || (x.vmA + ' En Gestión de Negocio VM: ' + (g ? g.vm.charAt(0).toLowerCase() + g.vm.slice(1) : '')))}</p></div>
+<h2 class="tit">Preguntas frecuentes</h2>${faq(x.fq)}
+${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y usa el programa gratis 7 días.')}
+${PLANTILLAS.length > 1 ? `<h2 class="tit">Más plantillas</h2>${PREVIA ? plTarjetas() : chips(PL_LISTAS.filter(y => y !== x).map(y => [y.n, `/plantillas/${y.s}/`]))}` : ''}</section>` }));
+    urls.push(ruta);
+  });
+  if (PL_LISTAS.length) {
+    poner('/plantillas/', pagina({ ruta: '/plantillas/', marca: true, modulo: true, medir: 'tc-plant', title: 'Plantillas gratis en Excel para tu negocio · Molina', desc: 'Plantillas gratis en Excel para negocios de Honduras: inventario, cierre y arqueo de caja, ventas al crédito, precios, gastos y pedidos. Se descargan sin registrarte.',
+      cuerpo: `<section class="hero"><h1>Plantillas gratis para tu negocio</h1><p>Hojas de Excel listas para llenar. Se descargan sin registrarte y sirven en el celular.</p></section>
+<section class="cont">${migas([['Para tu negocio', '/para-tu-negocio/'], ['Plantillas']])}${plTarjetas()}
+${invita('¿Y si se llenara sola?', 'Con Gestión de Negocio VM cada venta actualiza tu inventario, tu caja y tus cuentas por cobrar. Pruébalo gratis 7 días.')}</section>` }));
+    urls.push('/plantillas/');
+  }
+
   // Módulo aparte «Para tu negocio»: el programa por tipo de negocio y las guías (las tiendas van siempre primero en el resto del sitio)
   poner('/para-tu-negocio/', pagina({ ruta: '/para-tu-negocio/', marca: true, modulo: true, medir: 'tc-negocio', title: 'Para tu negocio · Ventas, inventario y tienda en línea en Honduras', desc: 'Gestión de Negocio VM: sistema de punto de venta, inventario, caja y tienda en línea para negocios de Honduras. Elige tu tipo de negocio y pruébalo gratis 7 días.',
     cuerpo: `<section class="hero"><h1>Un programa hecho para tu tipo de negocio</h1><p>Ventas, inventario, caja y cuentas por cobrar desde tu celular, con tu tienda en línea para aparecer en Tiendas Catrachas.</p><p class="dos"><a class="btn oro" href="${prob}">Probar gratis 7 días</a> <a class="btn linea claro" href="${WA}" rel="noopener">Escríbenos por WhatsApp</a></p></section>
 <section class="cont"><h2 class="tit">¿Qué tipo de negocio tienes?</h2><div class="negocios">${PARA.map((pn, k) => `<a class="neg" href="/programa/${slug(pn)}/"><h3>${esc(NEGOCIOS[k][0])}</h3><p>${esc(NEGOCIOS[k][1])}</p></a>`).join('')}</div>
 <h2 class="tit">Lo que trae para todos</h2><div class="todos">${COMUN.map(([n, d]) => `<div class="pto"><h3>${esc(n)}</h3><p>${esc(d)}</p></div>`).join('')}</div>
 <h2 class="tit">Guías</h2><div class="negocios">${GUIAS.map(g => `<a class="neg" href="/guias/${g.s}/"><h3>${esc(g.t)}</h3><p>${esc(g.d)}</p></a>`).join('')}</div>
+${PL_LISTAS.length ? `<h2 class="tit">Plantillas gratis</h2>${plTarjetas()}` : ''}
 ${invita('Empieza hoy', 'Crea tu cuenta, elige tu tipo de negocio y prueba el programa 7 días.')}</section>` }));
   urls.push('/para-tu-negocio/');
 

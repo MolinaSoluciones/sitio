@@ -39,6 +39,8 @@
   if (window.tcPagina) manda(window.tcPagina);
   // Toques para entrar a una tienda (botón «Entrar a la tienda» y productos de la ficha)
   document.addEventListener('click', function (e) { var a = e.target && e.target.closest ? e.target.closest('[data-ir]') : null; if (a) manda('tc-ir-' + a.getAttribute('data-ir')); });
+  // Descargas de plantillas (botón «Descargar la plantilla»)
+  document.addEventListener('click', function (e) { var a = e.target && e.target.closest ? e.target.closest('[data-bajar]') : null; if (a) manda('tc-bajar-' + a.getAttribute('data-bajar')); });
   // Lo que escriben en el buscador del directorio (cuando dejan de escribir)
   var b = document.getElementById('buscar'), t = 0;
   if (b) b.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { var s = slug(b.value).slice(0, 25); if (s.length >= 3) manda('tc-b-' + s); }, 2500); });
