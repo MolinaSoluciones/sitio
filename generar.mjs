@@ -728,25 +728,26 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
         ['¿Qué pasa con el anticipo si no retiran el pedido?', 'Depende de lo que acuerdes con tu cliente. Déjalo claro desde el principio y escríbelo en la nota del pedido.'],
         ['¿Cuántos pedidos caben?', 'Trae espacio para 500 pedidos.']] },
     { s: 'plantilla-completa-para-tu-negocio', n: 'Plantilla completa para tu negocio', t: 'Plantilla completa de Excel para tu negocio: ventas, inventario, caja y créditos', a: 'plantilla-completa-negocio.xlsx', pago: true,
-      d: 'Una sola plantilla de Excel con todo conectado: ventas, compras, inventario, caja diaria, ventas al crédito, gastos y el resumen del mes con tu ganancia. Es de pago.',
+      d: 'Una sola plantilla de Excel con todo conectado: ventas, compras, inventario, caja, arqueo, créditos, gastos y resúmenes. Pruébala gratis 10 días.',
       i: 'Todas las plantillas en un solo archivo, conectadas entre sí: cada venta descuenta tu inventario, entra a tu caja o a la cuenta del cliente y calcula su ganancia. Al final del mes ves cuánto vendiste, cuánto ganaste y cuánto te deben.',
-      inc: ['Ventas que descuentan el inventario, entran a la caja o a la cuenta del cliente y calculan su ganancia', 'Compras, abonos y gastos que se reflejan solos en el inventario, los clientes y la caja', 'Caja diaria que sabe cuánto debería haber sin sumar a mano', 'Resumen del mes: ventas, ganancia, gastos, lo que te deben y lo que hay que comprar'],
+      inc: ['Ventas que descuentan el inventario, entran a la caja o a la cuenta del cliente y calculan su ganancia', 'Compras, abonos y gastos que se reflejan solos en el inventario, los clientes y la caja', 'Caja diaria y arqueo que saben cuánto debería haber, con los abonos de cada cliente y los cobros con tarjeta o transferencia', 'Resumen del día y del mes: ventas, ganancia, gastos, la caja, lo que te deben y lo que hay que comprar'],
       hojas: [{ n: 'Resumen', d: 'Noviembre de 2026 (datos de ejemplo de una boutique).', lados: [
           { n: 'El mes', cab: ['Concepto', 'Monto'], fil: [['Ventas', '13,115.00'], ['Costo de lo vendido', '7,860.00'], ['Ganancia en ventas', '5,255.00'], ['Gastos', '4,400.00'], ['Ganancia del mes', '855.00']], calc: [0, 1], cel: [0, 1] },
           { n: 'Hoy en tu negocio', cab: ['Concepto', 'Dato'], fil: [['Te deben', '1,450.00'], ['Valor del inventario', '6,660.00'], ['Productos por comprar', '1'], ['Días con faltante en caja', '1']], calc: [0, 1], cel: [0, 1] }] },
         { n: 'Ventas', d: 'Lo que anotas cada día.', cab: ['Fecha', 'Producto', 'Cantidad', 'Total', 'Forma de pago', 'Cliente', 'Ganancia'],
           fil: [['03/11', 'Blusa', '4', '400.00', 'Efectivo', '', '160.00'], ['05/11', 'Zapatos de mujer', '1', '750.00', 'Crédito', 'María López', '300.00'], ['08/11', 'Cartera', '2', '1,000.00', 'Transferencia', '', '400.00']],
           calc: [3, 6], cel: [1, 3, 4, 6] }],
-      p: [['Cómprala por WhatsApp', 'Escríbenos y te damos la contraseña para abrir el archivo.'],
-        ['Descarga el archivo y ábrelo con Excel', 'En computadora o en el celular con la app de Excel. Te pide la contraseña la primera vez que lo abres.'],
+      p: [['Descárgala y úsala 10 días gratis', 'La prueba empieza el día que anotas tu primer dato. En «Ajustes» ves cuántos días te quedan.'],
+        ['Si te gusta, cómprala por WhatsApp', 'Te damos la contraseña: la escribes una sola vez en «Ajustes» y queda activada para siempre, con todo lo que ya anotaste.'],
         ['Empieza con lo que ya tienes', 'En «Compras», anota tu mercadería de hoy como «Inventario inicial».'],
         ['Anota ventas, compras, abonos y gastos', 'Solo en las celdas amarillas. Productos, clientes, estado de cuenta y resumen se llenan solos.'],
-        ['Cierra la caja y mira el resumen', 'La caja te dice cuánto debería haber; el resumen, cuánto ganaste en el mes.']],
+        ['Cierra la caja y haz tu arqueo', 'La caja y el arqueo te dicen cuánto debería haber; el resumen, cuánto ganaste en el mes.']],
       vm: 'La plantilla completa lleva todo tu negocio en Excel. Si además quieres tienda en línea, recibos y recordatorios por WhatsApp desde el celular, eso lo hace Gestión de Negocio VM.',
       fq: [['¿Por qué esta plantilla es de pago?', 'Porque une todas las plantillas en un solo archivo, con las hojas conectadas entre sí. Las plantillas sueltas siguen siendo gratis.'],
-        ['¿Cómo la compro?', 'Escríbenos por WhatsApp. Te decimos el precio y la forma de pago, y al pagar te damos la contraseña para abrir el archivo.'],
-        ['¿Puedo verla antes de comprarla?', 'Sí: en esta página ves cómo se ven sus hojas, y las plantillas gratis te muestran cómo funciona cada parte.'],
-        ['¿Se abre en Google Sheets?', 'No. Google Sheets no abre archivos con contraseña. Se abre con Excel en computadora o con la app de Excel en el celular.']] }
+        ['¿Cómo funciona la prueba?', 'La descargas y la usas con tus datos 10 días, contados desde el primer dato que anotas. Al terminar, todo lo que anotaste se queda y lo puedes ver.'],
+        ['¿Qué pasa cuando termina la prueba?', 'Ya no puedes anotar fechas, cantidades ni montos nuevos. Cuando escribes la contraseña en «Ajustes», sigues donde te quedaste, sin perder nada.'],
+        ['¿Cómo la compro?', 'Escríbenos por WhatsApp. Te decimos el precio y la forma de pago, y al pagar te damos la contraseña.'],
+        ['¿Con qué la uso?', 'Con Excel, en computadora o en la app de Excel del celular.']] }
   ];
   for (let i = PLANTILLAS.length - 1; i >= 0; i--) if ((PLANTILLAS[i].borrador && !PREVIA) || (!PLANTILLAS[i].a && !PREVIA)) PLANTILLAS.splice(i, 1);
   const PL_LISTAS = PLANTILLAS.filter(x => x.a);
@@ -757,7 +758,7 @@ ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y 
     const ruta = `/plantillas/${x.s}/`, baja = `/descargas/${x.a}`, g = GUIAS.find(y => y.s === x.g);
     archivos[baja] = readFileSync(new URL('./descargas/' + x.a, import.meta.url));
     const boton = x.pago
-      ? `<div class="precio"><b>Plantilla de pago</b><span>El archivo pide contraseña para abrirse. Escríbenos por WhatsApp: te decimos el precio y, al pagar, te damos la contraseña.</span></div><p class="bajar"><a class="btn grande oro" href="${WA}?text=${encodeURIComponent('Hola, quiero comprar la Plantilla completa para mi negocio.')}" rel="noopener" data-bajar="${esc(slug(x.n))}-wa">Comprar la contraseña por WhatsApp</a><a class="btn linea" href="${baja}" download data-bajar="${esc(slug(x.n))}">Descargar el archivo (pide contraseña)</a><small>Se abre con Excel en computadora o en la app de Excel del celular. Google Sheets no abre archivos con contraseña.</small></p>`
+      ? `<div class="precio"><b>Pruébala gratis 10 días</b><span>Descárgala y úsala con tus datos. Al terminar la prueba, lo que anotaste se queda, pero para seguir anotando necesitas la contraseña: escríbenos por WhatsApp, te decimos el precio y, al pagar, te la damos.</span></div><p class="bajar"><a class="btn grande" href="${baja}" download data-bajar="${esc(slug(x.n))}">Descargar y probar 10 días gratis</a><a class="btn grande oro" href="${WA}?text=${encodeURIComponent('Hola, quiero comprar la contraseña de la Plantilla completa para mi negocio.')}" rel="noopener" data-bajar="${esc(slug(x.n))}-wa">Comprar la contraseña por WhatsApp</a><small>Úsala con Excel, en computadora o en la app de Excel del celular.</small></p>`
       : `<p class="bajar"><a class="btn grande" href="${baja}" download data-bajar="${esc(slug(x.n))}">Descargar la plantilla (Excel)</a><small>Gratis · sin registrarte · sirve en Excel y Google Sheets</small></p>`;
     poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-plant-' + (k + 1), title: `${x.t} · Molina`, desc: x.d,
       ld: [{ '@context': 'https://schema.org', '@type': 'Article', headline: x.t, description: x.d, inLanguage: 'es', author: { '@type': 'Organization', name: 'Molina Soluciones Digitales' }, publisher: { '@type': 'Organization', name: 'Molina Soluciones Digitales', logo: { '@type': 'ImageObject', url: SITIO + '/icono-512.png' } }, mainEntityOfPage: SITIO + ruta }, faqLd(x.fq)],

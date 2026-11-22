@@ -1,8 +1,7 @@
 """Plantilla completa (de pago): ventas, compras, abonos, gastos, caja, productos, clientes, estado de cuenta y resumen del mes,
-todo conectado. Se publica con contraseña de apertura.
-Uso: CLAVE_COMPLETA='…' python3 herramientas/plantilla_completa.py
-La contraseña NO va en este repositorio (es público): se pasa por la variable CLAVE_COMPLETA.
-Sin la variable solo se crea la copia sin contraseña en /tmp (para revisar)."""
+todo conectado. Se publica con prueba gratis de 10 días; después, para seguir anotando, pide la contraseña de activación.
+Uso: ver el final del archivo (se crea con la variable CLAVE_COMPLETA, que NO va en este repositorio porque es público).
+"""
 import os, sys
 from pathlib import Path
 from datetime import date
@@ -29,8 +28,9 @@ def rng(hoja, col, n):
 def construir():
     wb = Workbook()
     res = wb.active; res.title = 'Resumen'
+    rd = wb.create_sheet('Resumen del día')
     ven = wb.create_sheet('Ventas'); com = wb.create_sheet('Compras'); abo = wb.create_sheet('Abonos'); gas = wb.create_sheet('Gastos')
-    caj = wb.create_sheet('Caja'); pro = wb.create_sheet('Productos'); cli = wb.create_sheet('Clientes'); ec = wb.create_sheet('Estado de cuenta'); aj = wb.create_sheet('Ajustes')
+    caj = wb.create_sheet('Caja'); arq = wb.create_sheet('Arqueo'); pro = wb.create_sheet('Productos'); cli = wb.create_sheet('Clientes'); ec = wb.create_sheet('Estado de cuenta'); aj = wb.create_sheet('Ajustes')
     # ---------------- Ajustes
     encabezado(aj, 'Ajustes', 'Cambia aquí tus reglas. Todo lo demás las usa solo.', 7)
     for k, (t, v, nf, tipo) in enumerate([('Avísame cuando queden (unidades)', 5, '0', 'num'), ('Margen que quieres ganar', 0.40, '0%', 'pct'), ('Redondear precios hacia arriba a (L)', 5, '0.##', 'num'),
@@ -75,8 +75,9 @@ def construir():
         ven.cell(f, 11, f'=IF(TRIM(B{f})="","",IF(AND(COUNTIF($B${P}:B{f},B{f})=1,COUNTIF({cB},B{f})=0),MAX(10000,$K$8:K{f - 1})+1,""))')
         ven.cell(f, 12, f'=IF(OR(TRIM(G{f})="",F{f}<>"Crédito"),"",IF(COUNTIFS($G${P}:G{f},G{f},$F${P}:F{f},"Crédito")=1,MAX($L$8:L{f - 1})+1,""))')
         ven.cell(f, 13, f"=IF(OR(F{f}<>\"Crédito\",G{f}<>'Estado de cuenta'!$B$5),\"\",COUNTIFS($G${P}:G{f},'Estado de cuenta'!$B$5,$F${P}:F{f},\"Crédito\"))")
+    for f in range(P, P + NV): ven.cell(f, 14, f"=IF(OR(TRIM(B{f})=\"\",A{f}<>'Resumen del día'!$B$5),\"\",COUNTIF($A${P}:A{f},'Resumen del día'!$B$5))")
     ven['L7'] = f'=MAX(L{P}:L{U})'
-    for c in 'KLM': ven[f'{c}8'] = 'n'; ven.column_dimensions[c].hidden = True
+    for c in 'KLMN': ven[f'{c}8'] = 'n'; ven.column_dimensions[c].hidden = True
     ven.conditional_formatting.add(f'G{P}:G{U}', FormulaRule(formula=[f'AND($F{P}="Crédito",TRIM($G{P})="")'], fill=relleno('FDE7EA'), font=ROJO))
     ven.conditional_formatting.add(f'B{P}:B{U}', FormulaRule(formula=[f'AND($B{P}<>"",COUNTIF(Productos!$A$9:$A$208,$B{P})=0)'], fill=relleno('FDE7EA'), font=ROJO))
     # ---------------- Abonos (F: clientes que no tienen ventas al crédito; G: movimientos del cliente del estado de cuenta)
@@ -88,7 +89,8 @@ def construir():
     for f in range(P, P + NA):
         abo.cell(f, 6, f'=IF(TRIM(B{f})="","",IF(AND(COUNTIF($B${P}:B{f},B{f})=1,COUNTIFS({vG},B{f},{vF},"Crédito")=0),MAX(10000,$F$8:F{f - 1})+1,""))')
         abo.cell(f, 7, f"=IF(OR(TRIM(B{f})=\"\",B{f}<>'Estado de cuenta'!$B$5),\"\",COUNTIF($B${P}:B{f},'Estado de cuenta'!$B$5))")
-    for c in 'FG': abo[f'{c}8'] = 'n'; abo.column_dimensions[c].hidden = True
+        abo.cell(f, 8, f'=IF(OR(TRIM(B{f})="",A{f}<>Arqueo!$B$5),"",COUNTIF($A${P}:A{f},Arqueo!$B$5))')
+    for c in 'FGH': abo[f'{c}8'] = 'n'; abo.column_dimensions[c].hidden = True
     # ---------------- Gastos
     encabezado(gas, 'Gastos', 'Lo que pagas para que el negocio funcione. Comprar mercadería para vender va en «Compras».', 5)
     cols = [('Fecha', 12, 'dd/mm/yyyy', 'fecha'), ('Tipo de gasto', 26, None, ('lista', TIPOS)), ('Detalle', 28, None, 'in'), ('Monto (L)', 12, LPS, 'num'),
@@ -96,6 +98,8 @@ def construir():
     tabla(gas, cols, NG, [(d(1), 'Alquiler del local', 'Alquiler de noviembre', 3000, 'Transferencia'), (d(5), 'Luz y agua', 'Recibo de luz', 650, 'Efectivo'),
                           (d(10), 'Internet y recargas', 'Internet del local', 500, 'Transferencia'), (d(12), 'Bolsas y empaques', 'Bolsas de regalo', 250, 'Efectivo')])
     cifras(gas, [('A', 'Gastos anotados', f'=COUNT(D{P}:D{P + NG - 1})', '0', False), ('C', 'Total gastado (L)', f'=SUM(D{P}:D{P + NG - 1})', LPS, False)])
+    for f in range(P, P + NG): gas.cell(f, 6, f"=IF(OR(TRIM(B{f})=\"\",A{f}<>'Resumen del día'!$B$5),\"\",COUNTIF($A${P}:A{f},'Resumen del día'!$B$5))")
+    gas['F8'] = 'n'; gas.column_dimensions['F'].hidden = True
     gas.conditional_formatting.add(f'B{P}:B{P + NG - 1}', FormulaRule(formula=[f'AND($B{P}<>"",COUNTIF({TIPOS},$B{P})=0)'], font=ROJO, fill=relleno('FDE7EA')))
     # ---------------- Productos (se llena sola)
     cBn, cC, cE = rng('Compras', 'B', NC), rng('Compras', 'C', NC), rng('Compras', 'E', NC)
@@ -171,10 +175,117 @@ def construir():
             ('Resultado', 11, None, ('calc', '=IF({J}{f}="","",IF({J}{f}=0,"Cuadra",IF({J}{f}>0,"Sobrante","Faltante")))')),
             ('Tarjeta y transferencias (L)', 13, LPS, ('calc', '=IF({A}{f}="","",' + S('Ventas', NV, 'E', 'A', 'F', 'Tarjeta') + '+' + S('Ventas', NV, 'E', 'A', 'F', 'Transferencia') + '+' + S('Abonos', NA, 'C', 'A', 'D', 'Tarjeta') + '+' + S('Abonos', NA, 'C', 'A', 'D', 'Transferencia') + ')')),
             ('Vendido al crédito (L)', 12, LPS, ('calc', '=IF({A}{f}="","",' + S('Ventas', NV, 'E', 'A', 'F', 'Crédito') + ')'))]
-    tabla(caj, cols, NCJ, [(d(3), 500, None, None, None, None, 0, None, 900), (d(5), 500, None, None, None, None, 0, None, 150), (d(12), 500, None, None, None, None, 0, None, 1130)])
+    tabla(caj, cols, NCJ, [(d(3), 500, None, None, None, None, 0, None, 900), (d(5), 500, None, None, None, None, 0, None, 150), (d(12), 500, None, None, None, None, 0, None, 1130), (d(15), 500, None, None, None, None, 0, None, 800)])
     cifras(caj, [('A', 'Días anotados', f'=COUNT(A{P}:A{P + NCJ - 1})', '0', False), ('C', 'Faltantes (L)', f'=-SUMIF(J{P}:J{P + NCJ - 1},"<0")', LPS, False),
                  ('E', 'Sobrantes (L)', f'=SUMIF(J{P}:J{P + NCJ - 1},">0")', LPS, False), ('H', 'Días con faltante', f'=COUNTIF(K{P}:K{P + NCJ - 1},"Faltante")', '0', False)])
     colorear(caj, f'K{P}:K{P + NCJ - 1}', f'$K{P}', [('Faltante', ROJO), ('Sobrante', AMBAR), ('Cuadra', VERDE)])
+    # ---------------- Arqueo (eliges el día; lo que debería haber sale de las otras hojas, el conteo se escribe)
+    from datetime import time
+    for col, w in zip('ABCD', (46, 16, 16, 4)): arq.column_dimensions[col].width = w
+    encabezado(arq, 'Arqueo de caja', 'Elige el día. Lo que debería haber sale solo de tus hojas; tú cuentas billetes y monedas.', 3)
+    def et(f, t, bold=False, color=TINTA):
+        c = arq[f'A{f}']; c.value = t; c.font = Font(name=F, size=10, bold=bold, color=color); c.border = borde
+    def tit(f, t):
+        for k in range(3): arq.cell(f, 1 + k).fill = relleno(MAGENTA)
+        arq[f'A{f}'] = t; arq[f'A{f}'].font = Font(name=F, size=11, bold=True, color='FFFFFF')
+    f = 5
+    for t, v, nf in [('Día del arqueo', d(15), 'dd/mm/yyyy'), ('Hora', time(18, 0), 'h:mm AM/PM'), ('Quién estaba en caja', 'Karla', None), ('Quién hizo el arqueo', 'Dueño', None)]:
+        et(f, t, bold=True); celda(arq[f'B{f}'], v, entrada=True, nf=nf); arq.merge_cells(f'B{f}:C{f}'); f += 1
+    validacion(arq, 'fecha').add('B5')
+    SD = lambda hoja, n, cm, cf, cond: f'SUMIFS({rng(hoja, cm, n)},{rng(hoja, "A", n)},$B$5,{rng(hoja, cf, n)},"{cond}")'
+    CJ = lambda col: f'IFERROR(INDEX({rng("Caja", col, NCJ)},MATCH($B$5,{rng("Caja", "A", NCJ)},0)),0)'
+    f = 10; tit(f, '1. Lo que debería haber en la gaveta (sale de tus hojas)'); f += 1; D1 = f
+    for t, fx in (('+ Apertura (de «Caja»)', '=N(' + CJ('B') + ')'), ('+ Ventas en efectivo', '=' + SD('Ventas', NV, 'E', 'F', 'Efectivo')),
+                  ('+ Abonos de clientes en efectivo', '=' + SD('Abonos', NA, 'C', 'D', 'Efectivo')), ('− Compras pagadas en efectivo', '=' + SD('Compras', NC, 'E', 'F', 'Efectivo')),
+                  ('− Gastos pagados en efectivo', '=' + SD('Gastos', NG, 'D', 'E', 'Efectivo')), ('− Retiros del dueño (de «Caja»)', '=N(' + CJ('G') + ')')):
+        et(f, t); celda(arq[f'B{f}'], fx, nf=LPS); f += 1
+    et(f, 'Debería haber', bold=True, color=VINO); celda(arq[f'B{f}'], f'=B{D1}+B{D1 + 1}+B{D1 + 2}-B{D1 + 3}-B{D1 + 4}-B{D1 + 5}', nf=LPS, negrita=True); DEB = f
+    f += 1; arq[f'A{f}'] = 'Si ese día no está anotado en «Caja», la apertura y los retiros salen en cero.'; arq[f'A{f}'].font = Font(name=F, size=8, color=GRIS)
+    f += 2; tit(f, '2. Abonos de clientes de ese día (de «Abonos»)'); f += 1
+    for col, t in zip('ABC', ('Cliente', 'Monto (L)', 'Cómo pagó')):
+        c = arq[f'{col}{f}']; c.value = t; c.font = Font(name=F, size=10, bold=True, color=VINO); c.border = borde; c.alignment = Alignment(horizontal='left' if col == 'A' else 'center')
+    f += 1; A0 = f
+    for r in range(10):
+        for col, sc, nf in (('A', 'B', None), ('B', 'C', LPS), ('C', 'D', None)):
+            celda(arq[f'{col}{f}'], f'=IFERROR(INDEX({rng("Abonos", sc, NA)},MATCH({r + 1},{rng("Abonos", "H", NA)},0)),"")', nf=nf, centro=col != 'A')
+        f += 1
+    et(f, 'Total abonado ese día', bold=True, color=VINO); celda(arq[f'B{f}'], f'=SUM(B{A0}:B{f - 1})', nf=LPS, negrita=True)
+    f += 2; tit(f, '3. Cobros que no están en la gaveta'); f += 1; N0 = f
+    for t, fx in (('Ventas con tarjeta', '=' + SD('Ventas', NV, 'E', 'F', 'Tarjeta')), ('Ventas por transferencia', '=' + SD('Ventas', NV, 'E', 'F', 'Transferencia')),
+                  ('Abonos con tarjeta o transferencia', '=' + SD('Abonos', NA, 'C', 'D', 'Tarjeta') + '+' + SD('Abonos', NA, 'C', 'D', 'Transferencia'))):
+        et(f, t); celda(arq[f'B{f}'], fx, nf=LPS); f += 1
+    et(f, 'Otros (escríbelos y descríbelos en la nota)'); celda(arq[f'B{f}'], 0, entrada=True, nf=LPS); validacion(arq, 'num').add(f'B{f}'); f += 1
+    et(f, 'Total fuera de la gaveta', bold=True, color=VINO); celda(arq[f'B{f}'], f'=SUM(B{N0}:B{f - 1})', nf=LPS, negrita=True); NGT = f; f += 1
+    et(f, 'Todo lo cobrado ese día (gaveta y fuera de ella)', bold=True, color=VINO); celda(arq[f'B{f}'], f'=B{D1 + 1}+B{D1 + 2}+B{NGT}', nf=LPS, negrita=True); f += 1
+    et(f, 'Vendido al crédito ese día (no es cobro)'); celda(arq[f'B{f}'], '=' + SD('Ventas', NV, 'E', 'F', 'Crédito'), nf=LPS)
+    f += 2; tit(f, '4. Conteo del efectivo'); f += 1
+    for col, t in zip('ABC', ('Billete o moneda', 'Cantidad', 'Total (L)')):
+        c = arq[f'{col}{f}']; c.value = t; c.font = Font(name=F, size=10, bold=True, color=VINO); c.border = borde; c.alignment = Alignment(horizontal='left' if col == 'A' else 'center')
+    f += 1; C0 = f
+    for v, n in [(500, 1), (200, 0), (100, 3), (50, 0), (20, 0), (10, 0), (5, 0), (2, 0), (1, 0), (0.50, 0), (0.20, 0), (0.10, 0), (0.05, 0)]:
+        et(f, f'Billete de L {v:g}' if v >= 1 else f'Moneda de {int(round(v * 100))} centavos'); arq[f'D{f}'] = v
+        celda(arq[f'B{f}'], n or None, entrada=True, nf='0'); celda(arq[f'C{f}'], f'=IF(B{f}="","",B{f}*D{f})', nf=LPS); f += 1
+    validacion(arq, 'num').add(f'B{C0}:B{f - 1}')
+    et(f, 'Total contado', bold=True, color=VINO); celda(arq[f'B{f}'], f'=SUM(B{C0}:B{f - 1})', nf='0'); celda(arq[f'C{f}'], f'=SUM(C{C0}:C{f - 1})', nf=LPS, negrita=True); CON = f
+    f += 2; tit(f, '5. Resultado'); f += 1
+    et(f, 'Diferencia (contado − debería haber)', bold=True); celda(arq[f'B{f}'], f'=ROUND(C{CON}-B{DEB},2)', nf=DIF, negrita=True); f += 1
+    et(f, 'Resultado', bold=True); celda(arq[f'B{f}'], f'=IF(B{f - 1}=0,"La caja cuadra",IF(B{f - 1}>0,"Sobrante","Faltante"))', negrita=True)
+    colorear(arq, f'B{f}', f'$B{f}', [('Faltante', ROJO), ('Sobrante', AMBAR), ('La caja cuadra', VERDE)]); f += 1
+    et(f, 'Motivo o nota', bold=True); celda(arq[f'B{f}'], None, entrada=True, centro=False); arq.merge_cells(f'B{f}:C{f}')
+    arq.column_dimensions['D'].hidden = True
+    f += 3
+    for t in ('Firma de quien estaba en caja', 'Firma de quien hizo el arqueo'):
+        arq[f'A{f}'] = '______________________________'; arq[f'A{f + 1}'] = t; arq[f'A{f + 1}'].font = Font(name=F, size=9, color=GRIS); f += 3
+    arq.print_area = f'A1:C{f}'
+    # ---------------- Prueba de 10 días: columnas ocultas con las fechas anotadas desde la fecha de corte (los ejemplos son anteriores)
+    for hoja, col, n in ((ven, 15, NV), (com, 11, NC), (abo, 9, NA), (gas, 7, NG), (caj, 14, NCJ)):
+        for f in range(P, P + n):
+            hoja.cell(f, col, f'=IF(AND(ISNUMBER(A{f}),A{f}>=Ajustes!$Z$1),A{f},"")')
+        hoja.column_dimensions[L(col)].hidden = True
+    # ---------------- Resumen del día (eliges la fecha; todo sale de las otras hojas)
+    encabezado(rd, 'Resumen del día', 'Elige el día en la casilla amarilla. Todo sale solo de tus ventas, compras, abonos, gastos y caja.', 8)
+    rd['A5'] = 'Día'; rd['A5'].font = Font(name=F, size=9, bold=True, color=VINO)
+    x = rd['B5']; x.value = d(12); x.number_format = 'dd/mm/yyyy'; x.font = Font(name=F, size=14, bold=True, color=TINTA); x.fill = relleno(AMARILLO); x.protection = ABIERTA
+    x.alignment = Alignment(horizontal='center'); x.border = Border(*(Side(style='medium', color=ORO),) * 4); validacion(rd, 'fecha').add('B5')
+    DIA = lambda hoja, n, cm, extra='': f'SUMIFS({rng(hoja, cm, n)},{rng(hoja, "A", n)},$B$5{extra})'
+    CJD = lambda col: f'INDEX({rng("Caja", col, NCJ)},MATCH($B$5,{rng("Caja", "A", NCJ)},0))'
+    def bl(c0, f0, titulo, filas, ancho=(32, 15)):
+        rd.column_dimensions[L(c0)].width = ancho[0]; rd.column_dimensions[L(c0 + 1)].width = ancho[1]
+        for k in range(2): rd.cell(f0, c0 + k).fill = relleno(VINO)
+        rd.cell(f0, c0, titulo).font = Font(name=F, size=11, bold=True, color='FFFFFF')
+        for k, (t, fx, nf, bold) in enumerate(filas):
+            a_ = rd.cell(f0 + 1 + k, c0, t); a_.font = Font(name=F, size=10, bold=bold, color=VINO if bold else TINTA); a_.border = borde
+            celda(rd.cell(f0 + 1 + k, c0 + 1), fx, nf=nf, negrita=bold)
+    bl(1, 7, 'Ventas del día', [('Total vendido', '=' + DIA('Ventas', NV, 'E'), LPS, True), ('Ganancia en ventas', '=' + DIA('Ventas', NV, 'I'), LPS, True),
+                                ('Unidades vendidas', '=' + DIA('Ventas', NV, 'C'), '#,##0.##', False), ('Ventas anotadas', f'=COUNTIFS({rng("Ventas", "A", NV)},$B$5,{rng("Ventas", "E", NV)},">0")', '0', False)])
+    bl(4, 7, 'Por forma de pago', [(fp, '=' + DIA('Ventas', NV, 'E', f',{rng("Ventas", "F", NV)},"{fp}"'), LPS, False) for fp in ('Efectivo', 'Tarjeta', 'Transferencia', 'Crédito')])
+    rd.column_dimensions['C'].width = 4; rd.column_dimensions['F'].width = 4
+    bl(7, 7, 'Entradas y salidas del día', [('Abonos recibidos', '=' + DIA('Abonos', NA, 'C'), LPS, False), ('Compras de mercadería', '=' + DIA('Compras', NC, 'E', f',{rng("Compras", "F", NC)},"<>Inventario inicial"'), LPS, False),
+                                            ('Gastos', '=' + DIA('Gastos', NG, 'D'), LPS, False), ('Ganancia del día (menos gastos)', '=B9-H10', LPS, True)], ancho=(34, 15))
+    bl(1, 13, 'La caja de ese día (de «Caja»)', [('Apertura', f'=IFERROR({CJD("B")},"")', LPS, False), ('Debería haber', f'=IFERROR({CJD("H")},"")', LPS, False),
+                                                 ('Se contó', f'=IFERROR(IF({CJD("I")}="","",{CJD("I")}),"")', LPS, False), ('Diferencia', f'=IFERROR({CJD("J")},"")', DIF, True),
+                                                 ('Resultado', f'=IFERROR(IF({CJD("K")}="","Sin contar",{CJD("K")}),"Ese día no está en «Caja»")', None, True)])
+    colorear(rd, 'B18', '$B18', [('Faltante', ROJO), ('Sobrante', AMBAR), ('Cuadra', VERDE)])
+    rd.conditional_formatting.add('H11', FormulaRule(formula=['$H$11<0'], font=ROJO))
+    # Detalle: ventas y gastos del día
+    def det(c0, f0, titulo, color, cols, hoja, helper, n, filas):
+        for k in range(len(cols)): rd.cell(f0, c0 + k).fill = relleno(color)
+        rd.cell(f0, c0, titulo).font = Font(name=F, size=11, bold=True, color='FFFFFF')
+        for k, (nm, w, nf, sc) in enumerate(cols):
+            c = rd.cell(f0 + 1, c0 + k, nm); c.font = Font(name=F, bold=True, color='FFFFFF', size=10); c.fill = relleno(VINO); c.border = borde; c.alignment = Alignment(horizontal='center', wrap_text=True)
+            if w: rd.column_dimensions[L(c0 + k)].width = max(rd.column_dimensions[L(c0 + k)].width or 0, w)
+            for r in range(filas):
+                txt = '' if nf else '&""'  # en columnas de texto, una celda vacía no debe salir como 0
+                celda(rd.cell(f0 + 2 + r, c0 + k), f'=IFERROR(INDEX({rng(hoja, sc, n)},MATCH({r + 1},{rng(hoja, helper, n)},0)){txt},"")', nf=nf, centro=sc not in ('B', 'C') or hoja == 'Ventas' and sc == 'C')
+    det(1, 21, 'Ventas de ese día', ORO, [('Producto', 0, None, 'B'), ('Cantidad', 0, '#,##0.##', 'C'), ('', 0, None, 'C'), ('Total (L)', 0, LPS, 'E'), ('Forma de pago', 0, None, 'F'), ('', 0, None, 'F'), ('Cliente', 0, None, 'G'), ('Ganancia (L)', 0, LPS, 'I')], 'Ventas', 'N', NV, 30)
+    # columnas C y F son separadores: se dejan vacías en el detalle
+    for r in range(22, 53):
+        for col in (3, 6):
+            c = rd.cell(r, col); c.value = None; c.fill = relleno('FFFFFF'); c.border = Border()
+    det(1, 55, 'Gastos de ese día', MAGENTA, [('Tipo de gasto', 0, None, 'B'), ('Monto (L)', 0, LPS, 'D'), ('', 0, None, 'D'), ('Detalle', 0, None, 'C'), ('Forma de pago', 0, None, 'E')], 'Gastos', 'F', NG, 15)
+    for r in range(56, 72):
+        c = rd.cell(r, 3); c.value = None; c.fill = relleno('FFFFFF'); c.border = Border()
+    rd.print_area = 'A1:H71'
     # ---------------- Resumen del mes
     encabezado(res, 'Resumen de tu negocio', 'Elige el mes y el año en las casillas amarillas. Todo se calcula con lo que anotas en las demás hojas.', 8)
     for c, t, v in (('A', 'Mes (1 a 12)', 11), ('C', 'Año', 2026)):
@@ -219,36 +330,104 @@ def construir():
         celda(res.cell(f, 2), f'=IF(A{f}="","",' + mes('Gastos', NG, 'D', 'A', f',{rng("Gastos", "B", NG)},A{f}') + ')', nf=LPS)
     # ---------------- Ayuda, orden y protección
     hoja_ayuda(wb, 'Plantilla completa para tu negocio', [
-        ('Solo escribes en las celdas amarillas', 'Ventas, Compras, Abonos, Gastos y Caja. Productos, Clientes, Estado de cuenta y Resumen se llenan solos.'),
+        ('Solo escribes en las celdas amarillas', 'Ventas, Compras, Abonos, Gastos, Caja y el conteo del Arqueo. Productos, Clientes, Estado de cuenta y Resumen se llenan solos.'),
         ('Empieza con lo que ya tienes', 'En «Compras», anota tu mercadería de hoy con la forma de pago «Inventario inicial». No sale de la caja.'),
         ('Anota cada venta', 'Producto, cantidad, precio y forma de pago. Si es al crédito, escribe el cliente: pasa solo a su cuenta. Cada venta calcula su ganancia.'),
         ('Anota compras, abonos y gastos', 'Las compras suben tu inventario; los abonos bajan lo que te deben; los gastos van al resumen. Lo que se paga en efectivo entra o sale de la caja solo.'),
         ('Cierra la caja cada día', 'En «Caja», escribe la fecha, la apertura, los retiros y lo que contaste. La hoja te dice cuánto debería haber y si cuadra.'),
+        ('Haz el arqueo cuando quieras', 'En «Arqueo» eliges el día: lo que debería haber, los abonos de cada cliente y los cobros con tarjeta o transferencia salen solos. Tú cuentas billetes y monedas, y lo imprimes para firmarlo.'),
+        ('Mira cómo te fue hoy', 'En «Resumen del día» eliges la fecha: ventas, ganancia, formas de pago, abonos, compras, gastos, la caja de ese día y el detalle de cada venta y cada gasto.'),
         ('Mira el «Resumen»', 'Elige el mes: ventas, ganancia, gastos, ganancia del mes, lo que te deben y lo que hay que comprar. Tus reglas (aviso, margen, límites, tipos de gasto) van en «Ajustes».'),
     ], ('Guías para tu negocio', '/guias/'), 'Con Gestión de Negocio VM todo esto pasa desde tu celular, con tienda en línea, recibos y recordatorios por WhatsApp.')
-    orden = ['Cómo usarla', 'Resumen', 'Ventas', 'Compras', 'Abonos', 'Gastos', 'Caja', 'Productos', 'Clientes', 'Estado de cuenta', 'Ajustes']
+    orden = ['Cómo usarla', 'Resumen', 'Resumen del día', 'Ventas', 'Compras', 'Abonos', 'Gastos', 'Caja', 'Arqueo', 'Productos', 'Clientes', 'Estado de cuenta', 'Ajustes']
     wb._sheets = [wb[n] for n in orden]
     for h in wb.worksheets:
         h.sheet_view.showGridLines = False
         h.page_setup.fitToWidth = 1; h.page_setup.fitToHeight = 0; h.sheet_properties.pageSetUpPr.fitToPage = True
-        if h.title not in ('Cómo usarla', 'Estado de cuenta'): h.page_setup.orientation = 'landscape'
+        if h.title not in ('Cómo usarla', 'Estado de cuenta', 'Arqueo'): h.page_setup.orientation = 'landscape'
+        if h.title == 'Arqueo': h.page_setup.fitToHeight = 1
         proteger(h)
-    for n in ('Ventas', 'Compras', 'Abonos', 'Gastos', 'Caja'): wb[n].sheet_properties.tabColor = ORO
-    for n in ('Resumen', 'Productos', 'Clientes', 'Estado de cuenta'): wb[n].sheet_properties.tabColor = MAGENTA
+    for n in ('Ventas', 'Compras', 'Abonos', 'Gastos', 'Caja', 'Arqueo'): wb[n].sheet_properties.tabColor = ORO
+    for n in ('Resumen', 'Resumen del día', 'Productos', 'Clientes', 'Estado de cuenta'): wb[n].sheet_properties.tabColor = MAGENTA
     wb.active = 1
     wb.properties.creator = 'Molina Soluciones Digitales'; wb.properties.title = 'Plantilla completa para tu negocio'
     return wb
 
 
+CORTE = date(2026, 11, 22)  # la prueba cuenta desde el primer dato con fecha igual o posterior (los ejemplos son anteriores)
+DIAS = 10
+
+
+def sumas_clave(clave):
+    """Dos sumas de comprobación de la contraseña (así la contraseña no queda escrita en el archivo)."""
+    t = (clave.strip().upper() + ' ' * 30)[:30]
+    return sum(ord(c) * (i + 1) for i, c in enumerate(t)), sum(ord(c) ** 2 * (i + 1) for i, c in enumerate(t)), len(clave.strip())
+
+
+def prueba(wb, clave):
+    """Prueba gratis de DIAS días: se usa normal; después, las fechas, cantidades y montos nuevos piden la contraseña de activación.
+    Lo ya anotado se queda y se puede ver. Las fórmulas quedan protegidas con la contraseña de las hojas."""
+    from openpyxl.workbook.defined_name import DefinedName
+    from openpyxl.worksheet.datavalidation import DataValidation
+    aj = wb['Ajustes']; k1, k2, ln = sumas_clave(clave)
+    # Celdas ocultas de control (columna Z de Ajustes)
+    aj['Z1'] = CORTE; aj['Z1'].number_format = 'dd/mm/yyyy'
+    fechas = ','.join(f"{h}!${c}${P}:${c}${P + n - 1}" for h, c, n in (('Ventas', 'O', NV), ('Compras', 'K', NC), ('Abonos', 'I', NA), ('Gastos', 'G', NG), ('Caja', 'N', NCJ)))
+    aj['Z2'] = f'=MIN({fechas})'  # día del primer dato propio (0 = aún no empieza)
+    cl = 'UPPER(TRIM($B$28))'
+    aj['Z3'] = (f'=AND(LEN(TRIM($B$28))={ln},SUMPRODUCT(CODE(MID({cl}&REPT(" ",30),ROW($Z$1:$Z$30),1))*ROW($Z$1:$Z$30))={k1},'
+                f'SUMPRODUCT(CODE(MID({cl}&REPT(" ",30),ROW($Z$1:$Z$30),1))^2*ROW($Z$1:$Z$30))={k2})')
+    aj['Z4'] = f'=OR($Z$3,$Z$2=0,TODAY()<=$Z$2+{DIAS - 1})'  # ¿se puede seguir anotando?
+    aj.column_dimensions['Z'].hidden = True
+    wb.defined_names['PUEDE'] = DefinedName('PUEDE', attr_text='Ajustes!$Z$4')
+    # Caja de activación en Ajustes, debajo de las reglas y de los tipos de gasto (que llegan a la fila 23)
+    for k in range(2): aj.cell(26, 1 + k).fill = relleno(ORO)
+    aj['A26'] = 'Prueba y activación'; aj['A26'].font = Font(name=F, size=11, bold=True, color=TINTA)
+    aj['A27'] = 'Estado'; aj['A27'].font = Font(name=F, size=10, bold=True, color=TINTA); aj['A27'].border = borde
+    est = (f'=IF($Z$3,"Activada. ¡Gracias por tu compra!",IF($Z$2=0,"Prueba gratis de {DIAS} días: empieza cuando anotes tu primer dato",'
+           f'IF(TODAY()<=$Z$2+{DIAS - 1},"Prueba gratis: te quedan "&($Z$2+{DIAS - 1}-TODAY()+1)&" días","Prueba terminada: escribe la contraseña para seguir anotando")))')
+    aj['B27'] = est; aj['B27'].font = Font(name=F, size=10, bold=True, color=VINO)
+    aj['A28'] = 'Contraseña de activación'; aj['A28'].font = Font(name=F, size=10, bold=True, color=TINTA); aj['A28'].border = borde
+    celda(aj['B28'], None, entrada=True); aj['B28'].border = Border(*(Side(style='medium', color=ORO),) * 4)
+    aj['A29'] = 'Cómprala por WhatsApp: 3313-0265. La escribes una sola vez y queda activada.'; aj['A29'].font = Font(name=F, size=9, color=GRIS)
+    # Aviso en el Resumen
+    res = wb['Resumen']
+    for f in (5, 6):
+        for k in range(5, 9): res.cell(f, k).fill = relleno(ORO)
+        res.merge_cells(start_row=f, start_column=5, end_row=f, end_column=8)
+    res['E5'] = '=Ajustes!B27'; res['E5'].font = Font(name=F, size=10, bold=True, color=TINTA)
+    res['E6'] = '=IF(Ajustes!$Z$3,"","Para seguir anotando después de la prueba: compra la contraseña por WhatsApp 3313-0265 y escríbela en «Ajustes».")'
+    res['E6'].font = Font(name=F, size=8, color=TINTA)
+    # Las validaciones de fechas y números de las hojas de datos piden la prueba vigente o la contraseña
+    msg = (f'Tu prueba gratis de {DIAS} días terminó. Lo que anotaste sigue aquí; para seguir anotando, escribe la contraseña en «Ajustes» '
+           '(cómprala por WhatsApp: 3313-0265). Si aún estás en la prueba, revisa que sea un número o una fecha.')
+    for nombre in ('Ventas', 'Compras', 'Abonos', 'Gastos', 'Caja', 'Arqueo'):
+        ws = wb[nombre]; nuevas = []
+        for dv in list(ws.data_validations.dataValidation):
+            if dv.type not in ('decimal', 'date'): continue
+            if nombre == 'Arqueo' and str(dv.sqref) == 'B5': continue  # elegir el día del arqueo siempre se puede
+            x = str(dv.sqref).split()[0].split(':')[0]
+            cond = f'{x}>36526' if dv.type == 'date' else (f'{x}>=0,{x}<=0.95' if dv.operator == 'between' else f'{x}>=0')
+            n = DataValidation(type='custom', formula1=f'AND(PUEDE,ISNUMBER({x}),{cond})', allow_blank=True, showErrorMessage=True, errorTitle='Prueba terminada o dato no válido', error=msg)
+            n.sqref = dv.sqref; nuevas.append(n); ws.data_validations.dataValidation.remove(dv)
+        for n in nuevas: ws.add_data_validation(n)
+    # Textos de la ayuda
+    ay = wb['Cómo usarla']; ay.insert_rows(5, 3)
+    for k in range(1, 3): ay.cell(5, k).fill = relleno(ORO); ay.cell(6, k).fill = relleno(ORO)
+    ay['B5'] = f'Pruébala gratis {DIAS} días'; ay['B5'].font = Font(name=F, size=12, bold=True, color=TINTA)
+    ay['B6'] = (f'La prueba empieza el día que anotas tu primer dato. Al terminar, lo que anotaste se queda y lo puedes ver, pero para seguir anotando '
+                'necesitas la contraseña: cómprala por WhatsApp (3313-0265) y escríbela una sola vez en «Ajustes».')
+    ay['B6'].font = Font(name=F, size=10, color=TINTA); ay['B6'].alignment = Alignment(wrap_text=True, vertical='top'); ay.row_dimensions[6].height = 30
+    for ws in wb.worksheets:
+        ws.protection.password = clave
+    return wb
+
+
 if __name__ == '__main__':
-    # Paso 1 (sin argumentos): crea la copia sin contraseña en /tmp. Recalcúlala con LibreOffice para que lleve los valores.
-    # Paso 2: CLAVE_COMPLETA='…' python3 herramientas/plantilla_completa.py /tmp/plantilla-completa-sin-clave.xlsx  → la cifra en descargas/
+    # Se publica con prueba gratis de 10 días. La contraseña NO va en este repositorio (es público): se pasa por la variable CLAVE_COMPLETA.
+    # 1) CLAVE_COMPLETA='…' python3 herramientas/plantilla_completa.py   → /tmp/plantilla-completa-prueba.xlsx
+    # 2) Recalcularla con LibreOffice y copiarla a descargas/plantilla-completa-negocio.xlsx
     clave = os.environ.get('CLAVE_COMPLETA')
-    if len(sys.argv) > 1 and clave:
-        from msoffcrypto.format.ooxml import OOXMLFile
-        with open(sys.argv[1], 'rb') as fi, open(SALIDA / 'plantilla-completa-negocio.xlsx', 'wb') as fo:
-            OOXMLFile(fi).encrypt(clave, fo)
-        print('con contraseña:', SALIDA / 'plantilla-completa-negocio.xlsx')
-    else:
-        construir().save('/tmp/plantilla-completa-sin-clave.xlsx')
-        print('sin contraseña: /tmp/plantilla-completa-sin-clave.xlsx')
+    if not clave: sys.exit('Falta la variable CLAVE_COMPLETA')
+    prueba(construir(), clave).save('/tmp/plantilla-completa-prueba.xlsx')
+    print('prueba: /tmp/plantilla-completa-prueba.xlsx')
