@@ -75,6 +75,10 @@ const txt = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().sli
 const num = n => Number(n) || 0;
 const fmtN = n => num(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const titulo = s => txt(s, 40).replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+// Nombres escritos TODO EN MAYÚSCULAS (como salen de la lista del proveedor): en Google se leen mejor en tipo título. Quita los asteriscos.
+// La dirección de la página no cambia (sale del mismo nombre en minúsculas).
+const bonito = s => { s = txt(s, 120).replace(/\s*\*+\s*/g, ' ').trim(); const l = s.replace(/[^\p{L}]/gu, ''); if (l.length < 4 || l !== l.toUpperCase()) return s;
+  return s.toLowerCase().replace(/(^|[\s(/-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()); };
 // Foto: igual que la tienda (dirección https o archivo de Drive). Cualquier otra cosa se descarta.
 const fotoSrc = (f, ancho) => {
   f = String(f || '');
@@ -121,7 +125,7 @@ function preparar(crudas) {
     // Ciudad: siempre con la misma forma («SAN PEDRO SULA» y «san pedro sula» son la misma); si no tiene letras («...») cuenta como sin ciudad
     let ciudad = titulo(String(n.dir.ciudad || '').toLowerCase()); if (!slug(ciudad)) ciudad = 'Honduras'; // sin ciudad escrita (negocios nuevos): aparece como «Honduras» hasta que la escriba
     return {
-      id: String(c.id), visitas: c.visitas, slug: s, nombre: txt(n.nombre, 80) || 'Tienda', giros: gs.length ? gs : ['otro'], giroN: txt(n.giro, 60),
+      id: String(c.id), visitas: c.visitas, slug: s, nombre: bonito(txt(n.nombre, 80)) || 'Tienda', mayoreo: /\bmayor(eo|ista|istas)?\b/i.test([n.nombre, n.dir.frase, n.eslogan, n.sobre].join(' ')), giros: gs.length ? gs : ['otro'], giroN: txt(n.giro, 60),
       ciudad, ciudadSlug: slug(ciudad), frase: txt(n.dir.frase, 80) || txt(n.eslogan, 80) || txt(n.sobre, 80),
       sobre: txt(n.sobre, 300), portada: fotoSrc(n.portada, 1400), portadaMini: fotoSrc(n.portada, 800), horario: txt(n.horario, 80), telefono: n.telefono, moneda: txt(n.moneda, 4) || 'L',
       entrega: n.entrega === 'domicilio' ? 'A domicilio' : n.entrega === 'recoger' ? 'Para recoger' : 'A domicilio y para recoger',
@@ -129,7 +133,7 @@ function preparar(crudas) {
       productos: (c.info.productos || []).map(p => {
         const ps = p.vars ? Object.values(p.vars).map(v => num(v.p) || num(p.precio)) : [num(p.precio)];
         const desde = Math.min(...ps, num(p.precio)), max = Math.max(...ps, num(p.precio));
-        return { nombre: txt(p.nombre, 90), cat: txt(p.sub || p.categoria, 40), foto: fotoSrc(p.foto), precio: p.vars ? desde : num(p.precio), desde: !!p.vars && desde < max,
+        return { nombre: bonito(txt(p.nombre, 90)), cat: txt(p.sub || p.categoria, 40), foto: fotoSrc(p.foto), precio: p.vars ? desde : num(p.precio), desde: !!p.vars && desde < max,
           desc: txt(p.descripcion || p.desc, 400), agotado: !!p.agotado, nuevo: !!p.nuevo && !p.agotado, stock: p.stock, esp: num(p.precioEsp) > 0 && num(p.minEsp) > 1 ? { p: num(p.precioEsp), m: num(p.minEsp) } : null };
       })
     };
@@ -146,8 +150,8 @@ const MARCA_LD = [
   { '@context': 'https://schema.org', '@type': 'Organization', name: 'Molina Soluciones Digitales', url: SITIO + '/', logo: SITIO + '/icono-512.png' }
 ];
 const jsonld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
-function pagina({ ruta, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina, medir }) {
-  const url = SITIO + ruta;
+function pagina({ ruta, canon, title, desc, cuerpo, ld, img, marca, modulo, sinEsquina, medir }) {
+  const url = SITIO + (canon || ruta);
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -286,10 +290,10 @@ ${invita('¿Tienes un negocio en ' + n + '?', 'Crea tu tienda en línea y aparec
   T.forEach(t => {
     const g = t.giros[0], gn = GIROS[g], gs = slug(gn), wa = waLink(t.telefono), ps = t.productos.slice(0, MAX_PROD);
     // Direcciones de los productos con foto: por nombre; si dos se llaman igual, el segundo lleva número
-    if (PAG_PROD) { const usados = new Set(); ps.forEach(p => { if (!p.foto) return; let b = slug(p.nombre) || 'producto', k = b, i = 2; while (usados.has(k)) k = b + '-' + (i++); usados.add(k); p.slug = k; }); }
+    if (PAG_PROD) { const usados = new Set(); ps.forEach(p => { if (!p.foto) return; let b = slug(p.nombre) || 'producto', k = b, i = 2; while (usados.has(k)) k = b + '-' + (i++); usados.add(k); p.slug = k; if (k !== b) p.canon = b; }); }
     const desc = txt(`${t.frase || gn + ' en ' + t.ciudad}. Pide desde tu celular y coordina la entrega directo con el negocio.`, 160);
     const datos = [['Horario', t.horario], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Dirección', t.direccion]].filter(x => x[1]);
-    poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, medir: 'tc-t-' + idMedir(t), title: `${t.nombre} · ${gn} en ${t.ciudad}`, desc, img: t.portada,
+    poner(`/tiendas/${t.slug}/`, pagina({ ruta: `/tiendas/${t.slug}/`, medir: 'tc-t-' + idMedir(t), title: `${t.nombre} · ${gn}${t.mayoreo ? ' al por mayor' : ''} en ${t.ciudad}`, desc, img: t.portada,
       ld: { '@context': 'https://schema.org', '@type': 'Store', name: t.nombre, description: desc, url: SITIO + '/tiendas/' + t.slug + '/', ...(t.portada && /^https:/.test(t.portada) ? { image: t.portada } : {}),
         address: { '@type': 'PostalAddress', ...(t.ciudad !== 'Honduras' ? { addressLocality: t.ciudad } : {}), addressCountry: 'HN', ...(t.direccion ? { streetAddress: t.direccion } : {}) } },
       cuerpo: `<section class="cont ficha">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.ciudad, `/tiendas/${gs}/${t.ciudadSlug}/`]])}
@@ -304,10 +308,11 @@ ${ps.length ? `<h2 class="sub">Productos</h2><div class="prods">${ps.map(p => pr
     urls.push(`/tiendas/${t.slug}/`);
     ps.filter(p => p.slug).forEach(p => {
       const ruta = `/tiendas/${t.slug}/${p.slug}/`, precio = `${t.moneda} ${fmtN(p.precio)}`, donde = t.ciudad !== 'Honduras' ? t.ciudad : 'Honduras';
-      const pd = txt(`${p.nombre} en ${donde}: ${p.desde ? 'desde ' : ''}${precio} en ${t.nombre}. ${p.desc || 'Pídelo desde tu celular y coordina la entrega directo con el negocio.'}`, 160);
+      const pn = p.nombre + (t.mayoreo ? ' al por mayor y detalle' : '');
+      const pd = txt(`${pn} en ${donde}: ${p.desde ? 'desde ' : ''}${precio} en ${t.nombre}. ${p.desc || 'Pídelo desde tu celular y coordina la entrega directo con el negocio.'}`, 160);
       const otros = ps.filter(x => x !== p && (!p.cat || x.cat === p.cat)).concat(ps.filter(x => x !== p && p.cat && x.cat !== p.cat)).slice(0, 6);
       const filas = [['Precio', (p.desde ? 'desde ' : '') + precio], ...(p.esp ? [['Por cantidad', `${t.moneda} ${fmtN(p.esp.p)} desde ${p.esp.m} piezas`]] : []), ['Disponibilidad', p.agotado ? 'Agotado' : 'Disponible'], ['Entrega', t.entrega], ['Formas de pago', t.pagos], ['Lo vende', t.nombre + ' · ' + donde]].filter(x => x[1]);
-      poner(ruta, pagina({ ruta, medir: 'tc-p-' + idMedir(t), title: `${p.nombre} en ${donde} · ${t.nombre}`, desc: pd, img: p.foto,
+      poner(ruta, pagina({ ruta, canon: p.canon && `/tiendas/${t.slug}/${p.canon}/`, medir: 'tc-p-' + idMedir(t), title: `${pn} · ${p.desde ? 'desde ' : ''}${precio} en ${donde} | ${t.nombre}`, desc: pd, img: p.foto,
         ld: { '@context': 'https://schema.org', '@type': 'Product', name: p.nombre, ...(p.desc ? { description: p.desc } : {}), ...(/^https:/.test(p.foto) ? { image: p.foto } : {}), ...(p.cat ? { category: p.cat } : {}),
           offers: { '@type': 'Offer', price: p.precio, priceCurrency: 'HNL', availability: 'https://schema.org/' + (p.agotado ? 'OutOfStock' : 'InStock'), url: SITIO + ruta, seller: { '@type': 'Store', name: t.nombre, url: SITIO + '/tiendas/' + t.slug + '/' } } },
         cuerpo: `<section class="cont ficha pprod">${migas([['Tiendas', '/tiendas/'], [gn, `/tiendas/${gs}/`], [t.nombre, `/tiendas/${t.slug}/`], [p.nombre]])}
@@ -319,7 +324,7 @@ ${p.desc ? `<p class="sobre">${esc(p.desc)}</p>` : ''}
 <dl class="datos">${filas.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
 ${otros.length ? `<h2 class="sub">Más de ${esc(t.nombre)}</h2><div class="prods">${otros.map(x => producto(t, x)).join('\n')}</div><p class="mas"><a class="btn linea" href="/tiendas/${esc(t.slug)}/">Ver toda la tienda</a></p>` : ''}
 <p class="hecho">Tienda creada con Gestión de Negocio VM · <a href="${esc(TIENDA_URL)}?src=catrachas">Crea la tuya</a></p></section>` }));
-      urls.push(ruta);
+      if (!p.canon) urls.push(ruta); // las repetidas no van al mapa del sitio
     });
   });
 
@@ -569,6 +574,24 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
   const PREVIA = process.env.PREVIA === '1';
   for (let i = GUIAS.length - 1; i >= 0; i--) if (GUIAS[i].borrador && !PREVIA) GUIAS.splice(i, 1);
   GUIAS.forEach(g => Object.assign(g, MAS[g.s] || {}));
+  // Ajustes por lo que la gente escribe en Google (Search Console, 26 nov 2026). La dirección de cada guía no cambia.
+  const BUSCAN = {
+    'como-hacer-el-cierre-de-caja': { t: 'Cierre de caja diario: cómo hacerlo paso a paso', d: 'Cómo hacer la apertura y el cierre de caja de tu negocio cada día, con un ejemplo en lempiras, para que el efectivo cuadre con las ventas, los gastos y los abonos.',
+      fq: [['¿Cómo cerrar caja en una tienda o pulpería?', 'Al terminar el día suma la apertura, las ventas en efectivo y los abonos; resta los gastos, pagos y retiros; cuenta billetes y monedas y anota si sobra o falta. Con una plantilla o un programa la cuenta sale sola.'],
+        ['¿Qué es la apertura y cierre de caja?', 'La apertura es anotar con cuánto efectivo empieza la caja. El cierre es contar al final del día y compararlo con lo que debería haber. Una sin la otra no sirve.']] },
+    'como-controlar-las-ventas-al-credito': { t: 'Cómo controlar el crédito de tus clientes', d: 'Cómo llevar las ventas al crédito y las cuentas por cobrar: quién te debe, cuánto, sus abonos y cómo recordarles el pago sin perder al cliente.',
+      fq: [['¿Cómo controlar el crédito de mis clientes?', 'Ponle a cada cliente un límite, anota cada compra al crédito y cada abono con su fecha, y revisa cada semana quién lleva más tiempo sin pagar. Así sabes cuánto te deben y a quién no darle más.']] },
+    'como-vender-por-whatsapp-con-catalogo': { t: 'Cómo vender por WhatsApp con catálogo: estrategias que funcionan', d: 'Estrategias de ventas por catálogo en WhatsApp: arma un catálogo con precios, comparte un solo enlace y lleva el control de los pedidos que llegan.',
+      fq: [['¿Qué estrategias de venta por catálogo funcionan en WhatsApp?', 'Publicar en tus estados todos los días, poner precio a todo, mostrar primero lo que más se vende, responder rápido y pedir a tus clientes que reenvíen el enlace. Una oferta con fecha límite ayuda a que se decidan.']] },
+    'como-manejar-pedidos-por-encargo-y-apartados': { t: 'Pedidos por encargo y apartados: cómo manejarlos sin perder dinero' },
+    'como-crear-una-tienda-en-linea-en-honduras': { t: 'Ventas por internet en Honduras: cómo crear tu tienda en línea', d: 'Los pasos para vender por internet en Honduras: tienda en línea con catálogo y fotos, formas de pago, entregas y cómo dar a conocer tu enlace.' }
+  };
+  GUIAS.forEach(g => { const a = BUSCAN[g.s]; if (!a) return; g.t = a.t || g.t; g.d = a.d || g.d; if (a.fq) g.fq = [...(g.fq || []), ...a.fq]; });
+  // Cada guía enlaza a su plantilla gratis (las plantillas ya enlazan a su guía)
+  const PL_DE = { 'como-llevar-el-inventario-de-tu-negocio': ['plantilla-de-inventario-en-excel', 'inventario'], 'como-hacer-el-cierre-de-caja': ['plantilla-de-cierre-de-caja-en-excel', 'cierre de caja diario'],
+    'como-hacer-un-arqueo-de-caja': ['plantilla-de-arqueo-de-caja-en-excel', 'arqueo de caja'], 'como-controlar-las-ventas-al-credito': ['plantilla-de-cuentas-por-cobrar-en-excel', 'ventas al crédito y cuentas por cobrar'],
+    'como-calcular-el-precio-de-venta': ['calculadora-de-precio-de-venta-en-excel', 'calculadora de precio de venta'], 'como-llevar-el-control-de-gastos-de-un-negocio': ['plantilla-de-control-de-gastos-en-excel', 'control de gastos'],
+    'como-manejar-pedidos-por-encargo-y-apartados': ['plantilla-de-pedidos-por-encargo-y-apartados-en-excel', 'pedidos por encargo y apartados'] };
   GUIAS.forEach(g => {
     const ruta = `/guias/${g.s}/`;
     poner(ruta, pagina({ ruta, marca: true, modulo: true, medir: 'tc-guia-' + (GUIAS.indexOf(g) + 1), title: `${g.t} · Guía`, desc: g.d,
@@ -578,6 +601,7 @@ ${invita('¿Tu negocio no está en la lista?', 'El programa se adapta. Escríben
 <ol class="pasos">${g.p.map(([n, d]) => `<li><h2>${esc(n)}</h2><p>${esc(d)}</p></li>`).join('')}</ol>
 ${g.ej ? `<h2 class="tit">${esc(g.ej[0])}</h2><div class="ej">${g.ej[1].map(([n, v]) => `<div><span>${esc(n)}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
 ${g.er ? `<h2 class="tit">Errores comunes</h2><ul class="errs">${g.er.map(([n, d]) => `<li><b>${esc(n)}.</b> ${esc(d)}</li>`).join('')}</ul>` : ''}
+${PL_DE[g.s] ? `<p class="intro">¿Prefieres llevarlo en Excel? Descarga gratis la <a href="/plantillas/${PL_DE[g.s][0]}/">plantilla de ${esc(PL_DE[g.s][1])} en Excel</a>.</p>` : ''}
 <div class="pto"${g.ej ? ' style="margin-top:22px"' : ''}><h3>Cómo se hace en Gestión de Negocio VM</h3><p>${esc(g.vm)}</p></div>
 ${g.fq ? `<h2 class="tit">Preguntas frecuentes</h2>${faq(g.fq)}` : ''}
 ${invita('Pruébalo en tu negocio', 'Crea tu cuenta, elige tu tipo de negocio y usa el programa gratis 7 días.')}
